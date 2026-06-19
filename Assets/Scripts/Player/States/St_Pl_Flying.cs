@@ -1,5 +1,5 @@
 using UnityEngine;
-using AdequateGames;
+using hoZer;
 
 public class St_Pl_Flying : State<PlayerStateMachine>
 {

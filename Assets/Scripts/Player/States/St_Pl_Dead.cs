@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using AdequateGames;
+using hoZer;
 
 public class St_Pl_Dead : State<PlayerStateMachine>
 {
