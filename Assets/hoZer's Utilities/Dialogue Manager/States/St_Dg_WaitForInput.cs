@@ -2,7 +2,7 @@ using System;
 using UnityEngine.InputSystem;
 
 
-namespace AdequateGames.Dialogue
+namespace hoZer.Dialogue
 {
 	[Serializable]
 	public class St_Dg_WaitForInput : State<DialogueManager>

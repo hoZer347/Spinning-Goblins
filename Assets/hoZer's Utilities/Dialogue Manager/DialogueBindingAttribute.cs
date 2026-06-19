@@ -1,7 +1,7 @@
 using System;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	// Marks a method as a dialogue command, callable from a script via [Name arg, arg, ...].
 	// Pass a name to expose it under something other than the method name.

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
-namespace AdequateGames.Dialogue
+namespace hoZer.Dialogue
 {
 	[Serializable]
 	public class St_Dg_StreamPlainText : State<DialogueManager>

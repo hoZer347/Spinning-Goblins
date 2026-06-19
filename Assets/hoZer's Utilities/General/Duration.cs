@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	public struct Duration
 	{

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace AdequateGames.Dialogue
+namespace hoZer.Dialogue
 {
 	[Serializable]
 	public class St_Dg_StreamRichText : State<DialogueManager>

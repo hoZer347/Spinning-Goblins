@@ -7,7 +7,7 @@ using System.Reflection;
 #endif
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	abstract public class StateMachine<_Focus> : StateMachine
 		where _Focus : StateMachine<_Focus>, new()

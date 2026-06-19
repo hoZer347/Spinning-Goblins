@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	[CustomEditor(typeof(StateMachine), true)]
 	public class StateMachineEditor : Editor

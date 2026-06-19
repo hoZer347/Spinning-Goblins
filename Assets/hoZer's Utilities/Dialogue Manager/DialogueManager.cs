@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace AdequateGames.Dialogue
+namespace hoZer.Dialogue
 {
 	/// <summary>
 	/// A StateMachie that manages the parsing and display of a Dialogue Script

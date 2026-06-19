@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	[Serializable]
 	public struct SpeedAttributes

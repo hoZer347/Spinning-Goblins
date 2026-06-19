@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	/// <summary>
 	/// A serializable, inspector-searchable reference to a StateMachine.State.

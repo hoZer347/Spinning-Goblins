@@ -6,7 +6,7 @@ using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	/// <summary>
 	/// Adds "Create > Adequate Games > State" to the Project window, spawning a new

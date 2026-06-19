@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	public static class DialogueArgs
 	{

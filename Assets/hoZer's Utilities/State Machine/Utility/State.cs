@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	public class State<_Focus> : State
 	where _Focus : StateMachine<_Focus>, new()

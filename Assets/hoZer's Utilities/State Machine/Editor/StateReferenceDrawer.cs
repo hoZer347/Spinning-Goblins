@@ -7,7 +7,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	[CustomPropertyDrawer(typeof(StateReference))]
 	public class StateReferenceDrawer : PropertyDrawer
