@@ -1,7 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using AdequateGames;
+using hoZer;
+using System;
 
+
+[Serializable]
 public class St_Pl_Dead : State<PlayerStateMachine>
 {
     private bool _respawning;

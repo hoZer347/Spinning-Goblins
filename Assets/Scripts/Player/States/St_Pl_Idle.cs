@@ -1,6 +1,9 @@
+using hoZer;
+using System;
 using UnityEngine;
-using AdequateGames;
 
+
+[Serializable]
 public class St_Pl_Idle : State<PlayerStateMachine>
 {
     public override void OnEnter(State lastState)

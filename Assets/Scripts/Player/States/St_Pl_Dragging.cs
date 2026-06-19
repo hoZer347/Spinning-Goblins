@@ -1,7 +1,10 @@
+using hoZer;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using AdequateGames;
 
+
+[Serializable]
 public class St_Pl_Dragging : State<PlayerStateMachine>
 {
     private Vector2 _origin;

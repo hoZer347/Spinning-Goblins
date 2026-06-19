@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using AdequateGames;
+using hoZer;
 
 public class PlayerStateMachine : StateMachine<PlayerStateMachine>
 {

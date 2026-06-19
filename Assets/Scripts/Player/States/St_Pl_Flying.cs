@@ -1,6 +1,9 @@
+using hoZer;
+using System;
 using UnityEngine;
-using AdequateGames;
 
+
+[Serializable]
 public class St_Pl_Flying : State<PlayerStateMachine>
 {
     private const float RestThreshold = 0.15f;
