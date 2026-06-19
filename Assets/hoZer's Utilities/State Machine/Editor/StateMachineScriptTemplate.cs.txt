@@ -1,0 +1,16 @@
+using UnityEngine;
+
+
+namespace AdequateGames
+{
+	public class #SCRIPTNAME# : StateMachine<#SCRIPTNAME#>
+	{
+		#region Variables
+
+		#endregion
+
+		#region Helper Functions
+
+		#endregion
+	};
+};

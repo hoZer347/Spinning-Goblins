@@ -1,0 +1,36 @@
+using System;
+using UnityEngine;
+
+
+namespace AdequateGames
+{
+	[Serializable]
+	public class #SCRIPTNAME# : State
+	{
+		// Runs when this state is entered through Proceed / SetState
+		public override void OnEnter(State lastState)
+		{
+			
+		}
+			
+		// Runs every frame while this state is active
+		// It's best to put .wasPressedThisFrame / .wasReleasedThisFrame input checks here
+		public override void OnUpdate()
+		{
+			
+		}
+
+		// Runs every physics frame while this state is active
+		// Physics Calculations go here
+		public override void OnPhysics()
+		{
+			
+		}
+
+		// Runs when this state exits through Proceed / SetState
+		public override void OnExit(State nextState)
+		{
+			
+		}
+	};
+};
