@@ -21,7 +21,9 @@ public class St_Pl_Dragging : State<PlayerStateMachine>
             Focus.DragLine.positionCount = 2;
             Focus.DragLine.startWidth = 0.04f;
             Focus.DragLine.endWidth = 0.01f;
-        }
+        };
+
+
     }
 
     public override void OnUpdate()

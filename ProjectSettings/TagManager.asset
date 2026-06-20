@@ -3,7 +3,10 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - Pit
+  - Damager Collider
+  - Obstacle
   layers:
   - Default
   - TransparentFX
@@ -12,9 +15,9 @@ TagManager:
   - Water
   - UI
   - 
-  - 
-  - 
-  - 
+  - Obstacle
+  - Damage
+  - Pits
   - 
   - 
   - 
@@ -52,6 +55,9 @@ TagManager:
     locked: 0
   - name: Overgrowth
     uniqueID: 306963027
+    locked: 0
+  - name: Top
+    uniqueID: 1116172185
     locked: 0
   m_RenderingLayers:
   - Default

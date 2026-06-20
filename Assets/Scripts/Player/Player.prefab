@@ -55,16 +55,29 @@ MonoBehaviour:
   Rigidbody: {fileID: 9110853654709296004}
   Collider: {fileID: 313777376746095868}
   DragLine: {fileID: 1757438519526932735}
+  Sprite: {fileID: 7443837218076446409}
   LaunchForceMultiplier: 15
   MaxDragDistance: 3
   LinearDamping: 0.8
   StickyDamping: 8
   StickyThreshold: 3
-  SpikeLayer:
+  Bounciness: 1
+  ObstacleLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
+  DamageLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  PitsLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  IFrameDuration: 1
+  ScreenShakeDuration: 0.15
+  ScreenShakeMagnitude: 0.15
+  FallDuration: 0.5
   DeathPanel: {fileID: 0}
   SpawnPosition: {x: 0, y: 0}
+  OriginalScale: {x: 0, y: 0, z: 0}
   LaunchForce: {x: 0, y: 0}
   DragClickPosition: {x: 0, y: 0}
   references:
@@ -97,7 +110,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 0
 --- !u!58 &313777376746095868
 CircleCollider2D:

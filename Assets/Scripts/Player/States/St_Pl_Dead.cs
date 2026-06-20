@@ -34,7 +34,7 @@ public class St_Pl_Dead : State<PlayerStateMachine>
         _respawning = true;
 
         if (Focus.DeathPanel != null) Focus.DeathPanel.SetActive(false);
-        Focus.transform.position = Focus.SpawnPosition;
+        Focus.RespawnAtStart();
         SetState<St_Pl_Idle>();
     }
 
