@@ -9,7 +9,7 @@ using UnityEngine;
 /// back at the start. <see cref="PlayerController.IsInvulnerable"/> covers this state.
 /// </summary>
 [Serializable]
-public class St_Pl_Falling : State<PlayerController>
+public class St_Pl_Falling : St_Pl_Base
 {
     private const float SpinSpeed = 540f; // deg/sec, just for a little flourish
 

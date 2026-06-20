@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 
 [Serializable]
-public class St_Pl_Dragging : State<PlayerController>
+public class St_Pl_Dragging : St_Pl_Base
 {
     private Vector2 _origin;
 

@@ -1,10 +1,11 @@
 using System;
 using UnityEngine;
 using hoZer;
+using UnityEngine.InputSystem;
 
 
 [Serializable]
-public class St_Pl_Flying : State<PlayerController>
+public class St_Pl_Flying : St_Pl_Base
 {
     private const float RestThreshold = 0.15f;
     private const float MinFlightTime = 0.25f;
@@ -15,13 +16,21 @@ public class St_Pl_Flying : State<PlayerController>
     {
         _elapsed = 0f;
         Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
+        Focus.Rigidbody.linearDamping = Focus.LinearDamping;
         Focus.Rigidbody.AddForce(Focus.LaunchForce, ForceMode2D.Impulse);
     }
 
     public override void OnUpdate()
     {
-        _elapsed += Time.deltaTime;
+        // A press brakes the flight.
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            SetState<St_Pl_Stopping>();
+            return;
+        }
 
+        // Otherwise settle into Idle once we've slowed down.
+        _elapsed += Time.deltaTime;
         if (_elapsed >= MinFlightTime && Focus.Rigidbody.linearVelocity.magnitude < RestThreshold)
             SetState<St_Pl_Idle>();
     }

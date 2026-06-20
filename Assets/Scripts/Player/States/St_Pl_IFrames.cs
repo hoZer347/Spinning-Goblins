@@ -9,7 +9,7 @@ using UnityEngine;
 /// <see cref="PlayerController.IsInvulnerable"/> treats this state as immune to damage.
 /// </summary>
 [Serializable]
-public class St_Pl_IFrames : State<PlayerController>
+public class St_Pl_IFrames : St_Pl_Base
 {
     private const float BlinkInterval = 0.1f;
 

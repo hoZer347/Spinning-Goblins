@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using hoZer;
 
 
@@ -36,6 +35,9 @@ public class PlayerController : StateMachine<PlayerController>
 
 	[Header("Death UI")]
 	public GameObject DeathPanel;
+
+	[Header("Stopping")]
+	[SerializeField] public float stopFriction = 5f;
 
 	[HideInInspector] public Vector2 SpawnPosition;
 	[HideInInspector] public Vector3 OriginalScale;
@@ -74,81 +76,24 @@ public class PlayerController : StateMachine<PlayerController>
 		SetState<St_Pl_Idle>();
 	}
 
-	protected override void OnUpdate()
-	{
-		if (Rigidbody != null)
-			Rigidbody.linearDamping = LinearDamping;
+	// --- Queries & effects for states to use. No transitions are decided here. ----------
 
-		// Pits only swallow the player while resting (Idle), and only once the player's
-		// center is actually inside a pit cell (not merely overlapping its edge).
-		if (Current is St_Pl_Idle && IsCenterOverPit())
-		{
-			SetState<St_Pl_Falling>();
-			return;
-		}
-
-		if (Mouse.current.leftButton.wasPressedThisFrame && CanStartDrag())
-		{
-			// Starting a drag while your center sits on a pit drops you in instead of
-			// launching. Checked only at the press (your origin), so dragging back over a
-			// different pit still won't fall you.
-			if (IsCenterOverPit())
-			{
-				SetState<St_Pl_Falling>();
-				return;
-			}
-
-			DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-			SetState<St_Pl_Dragging>();
-		}
-	}
-
-	private bool CanStartDrag() =>
-		!(Current is St_Pl_Dragging)
-		&& !(Current is St_Pl_Dead)
-		&& !(Current is St_Pl_IFrames)
-		&& !(Current is St_Pl_Falling);
-
-	private bool IsCenterOverPit()
+	/// <summary>True when the player's center point lies inside a pit cell.</summary>
+	public bool IsCenterOverPit()
 	{
 		if (Collider == null) return false;
 		// Only the player's center point counts, so brushing a pit edge won't drop you in.
-		// Pits should be trigger colliders so the player can float over them.
 		return Physics2D.OverlapPoint(Collider.bounds.center, PitsLayer) != null;
 	}
 
-	private void OnCollisionEnter2D(Collision2D col)
+	public bool IsDamageLayer(int layer) => (DamageLayer.value & (1 << layer)) != 0;
+
+	/// <summary>Kicks the camera's own state machine into its shake state, if one exists.</summary>
+	public void ShakeCamera()
 	{
-		// Obstacle tiles bounce automatically via the physics material; nothing to do.
-		if (InMask(col.gameObject.layer, DamageLayer))
-			TakeDamage();
-	}
-
-	private void OnTriggerEnter2D(Collider2D col)
-	{
-		// Supports a Damage layer configured as a trigger as well.
-		if (InMask(col.gameObject.layer, DamageLayer))
-			TakeDamage();
-	}
-
-	/// <summary>
-	/// Applies a hit: screen shake, respawn at the start, then a brief invulnerable window.
-	/// For now any hit just respawns the player (no health pool yet).
-	/// </summary>
-	public void TakeDamage()
-	{
-		if (IsInvulnerable) return;
-
-		
-		CameraController cameraController = FindAnyObjectByType<CameraController>();
-		if (cameraController != null)
-			cameraController.SetState<St_Cm_Shake>();
-
-		//CameraShake.Shake(ScreenShakeDuration, ScreenShakeMagnitude);
-
-		// TODO: subtract from a health pool here, only respawn / go to St_Pl_Dead when depleted.
-		RespawnAtStart();
-		SetState<St_Pl_IFrames>();
+		CameraController camera = FindAnyObjectByType<CameraController>();
+		if (camera != null)
+			camera.SetState<St_Cm_Shake>();
 	}
 
 	/// <summary>Resets the player to its starting position, scale, rotation and a clean velocity.</summary>
@@ -162,11 +107,23 @@ public class PlayerController : StateMachine<PlayerController>
 		transform.localScale = OriginalScale;
 		transform.rotation = Quaternion.identity;
 
-		// Push the move into the physics world immediately so the next IsCenterOverPit()
-		// query reads the new position. Without this the collider bounds stay at the old
-		// (pit) location until the next FixedUpdate, which re-triggers the fall on respawn.
+		// Push the move into the physics world immediately so the next IsCenterOverPit() query
+		// reads the new position, instead of the stale (pit) location it held pre-respawn.
 		Physics2D.SyncTransforms();
 	}
 
-	private static bool InMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
+	/// <summary>The active state narrowed to the player base. Every player state derives from
+	/// St_Pl_Base, so this is the single place the machine's generic State gets cast.</summary>
+	private St_Pl_Base ActiveState => Current as St_Pl_Base;
+
+	/// <summary>
+	/// External damage entry point (e.g. enemies). Routed to the current state so the
+	/// transition decision stays inside a state, never on the machine.
+	/// </summary>
+	public void TakeDamage() => ActiveState?.OnDamage();
+
+	// --- MonoBehaviour messages: forward to the current state, decide nothing here. ------
+
+	private void OnCollisionEnter2D(Collision2D col) => ActiveState?.OnContact(col.collider);
+	private void OnTriggerEnter2D(Collider2D col) => ActiveState?.OnContact(col);
 }
