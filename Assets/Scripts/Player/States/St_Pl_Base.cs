@@ -15,7 +15,15 @@ public abstract class St_Pl_Base : State<PlayerController>
     /// </summary>
     public virtual void OnContact(Collider2D other)
     {
-        if (Focus.IsDamageLayer(other.gameObject.layer))
+		// A flying player stuns the enemy it strikes. Drive the ENEMY's machine into hitstun —
+		// calling the bare SetState here would push an EnemyController state onto the player's
+		// own machine, where Focus (stateMachine as EnemyController) is null.
+		EnemyController enemyController = other.GetComponent<EnemyController>();
+		if (enemyController != null
+			&& Focus.Current is St_Pl_Flying)
+			enemyController.SetState<St_En1_Hitstun>();
+
+		if (Focus.IsDamageLayer(other.gameObject.layer))
             OnDamage();
     }
 

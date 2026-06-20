@@ -46,16 +46,12 @@ namespace hoZer
 			{
 				StateDropdown dropdown = new(new AdvancedDropdownState(), machineType);
 
-				dropdown.OnPicked = picked =>
-				{
-					stateProp.managedReferenceValue = picked == null
-						? null
-						: Activator.CreateInstance(picked);
+				dropdown.OnPicked = picked => AssignStartState(property, picked);
 
-					property.serializedObject.ApplyModifiedProperties();
-				};
-
-				dropdown.OnCreateNew = () => CreateStateMenu.CreateFocusedState(machine);
+				// <New> scaffolds a state script and, once it compiles, assigns it to the start
+				// state of every selected machine (see CreateStateMenu.PendingStartState).
+				dropdown.OnCreateNew = () => CreateStateMenu.CreateFocusedState(
+					machine, property.serializedObject.targetObjects, property.propertyPath);
 
 				dropdown.Show(dropdownRect);
 			};
@@ -117,6 +113,25 @@ namespace hoZer
 				enterChildren = false;
 
 				yield return iterator.Copy();
+			};
+		}
+
+		// Applies the picked state type to the _startState of every selected machine, so
+		// multi-object editing assigns them all, not just the one drawing the field.
+		private static void AssignStartState(SerializedProperty property, Type picked)
+		{
+			string path = property.propertyPath;
+
+			foreach (UnityEngine.Object obj in property.serializedObject.targetObjects)
+			{
+				SerializedObject so = new(obj);
+				SerializedProperty stateProp = so.FindProperty(path).FindPropertyRelative("_state");
+
+				stateProp.managedReferenceValue = picked == null
+					? null
+					: Activator.CreateInstance(picked);
+
+				so.ApplyModifiedProperties();
 			};
 		}
 

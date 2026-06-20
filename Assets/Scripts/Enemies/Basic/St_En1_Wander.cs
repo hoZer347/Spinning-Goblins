@@ -27,8 +27,18 @@ namespace hoZer
 
 			Focus.transform.position +=
 				(Vector3)(direction
-					* wanderDistance
+					* Focus.wanderSpeed
 					* Time.fixedDeltaTime);
+
+			if (Vector2.Distance(
+					Focus.transform.position,
+					new Vector2(
+						Focus.transform.position.x,
+						Focus.transform.position.y)
+					+ direction
+					* wanderDistance)
+				>= wanderDistance)
+				SetState<St_En1_Wait>();
 		}
 	};
 };

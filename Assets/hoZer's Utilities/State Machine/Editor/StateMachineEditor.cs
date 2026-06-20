@@ -8,6 +8,7 @@ using UnityEngine;
 namespace hoZer
 {
 	[CustomEditor(typeof(StateMachine), true)]
+	[CanEditMultipleObjects]
 	public class StateMachineEditor : Editor
 	{
 		static readonly HashSet<string> baseFields = BuildBaseFields();
@@ -42,7 +43,24 @@ namespace hoZer
 			}
 
 			using (new EditorGUI.DisabledScope(true))
-				EditorGUILayout.TextField("Current State", CurrentStateName(machine));
+			{
+				// With several machines selected the current state may differ between them, so
+				// show a mixed-value dash unless they all report the same state.
+				string current = CurrentStateName(machine);
+				bool mixed = false;
+
+				for (int i = 1; i < targets.Length; i++)
+					if (CurrentStateName((StateMachine)targets[i]) != current)
+					{
+						mixed = true;
+
+						break;
+					};
+
+				EditorGUI.showMixedValue = mixed;
+				EditorGUILayout.TextField("Current State", mixed ? "—" : current);
+				EditorGUI.showMixedValue = false;
+			};
 
 			it = serializedObject.GetIterator();
 			enterChildren = true;
@@ -62,7 +80,8 @@ namespace hoZer
 			EditorGUILayout.Space();
 
 			if (GUILayout.Button("Flush State History To Text"))
-				FlushToText(machine);
+				foreach (Object obj in targets)
+					FlushToText((StateMachine)obj);
 		}
 
 		public override bool RequiresConstantRepaint() => Application.isPlaying;

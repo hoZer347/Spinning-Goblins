@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
@@ -77,7 +78,10 @@ namespace hoZer
 		// Scaffolds a focus-typed state script using the same inline-rename flow as the
 		// Create menu, typed to the state machine's focus and dropped into the same folder
 		// (and namespace) as the machine's own script. Called by the StateReference UI.
-		public static void CreateFocusedState(UnityEngine.Object machine)
+		public static void CreateFocusedState(
+			UnityEngine.Object machine,
+			UnityEngine.Object[] assignTargets = null,
+			string startStatePath = null)
 		{
 			TextAsset template = AssetDatabase.LoadAssetAtPath<TextAsset>(templatePath);
 
@@ -91,9 +95,11 @@ namespace hoZer
 				return;
 
 			DoCreateFocusedState action = ScriptableObject.CreateInstance<DoCreateFocusedState>();
-			action.template = template.text;
-			action.focus    = focusType.Name;
-			action.ns       = focusType.Namespace;
+			action.template       = template.text;
+			action.focus          = focusType.Name;
+			action.ns             = focusType.Namespace;
+			action.assignTargets  = assignTargets;
+			action.startStatePath = startStatePath;
 
 			Texture2D icon = EditorGUIUtility.IconContent("cs Script Icon").image as Texture2D;
 
@@ -122,6 +128,8 @@ namespace hoZer
 		public string template;
 		public string focus;
 		public string ns;
+		public UnityEngine.Object[] assignTargets;
+		public string startStatePath;
 
 		public override void Action(int instanceId, string pathName, string resourceFile)
 		{
@@ -143,6 +151,92 @@ namespace hoZer
 			UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(pathName);
 
 			ProjectWindowUtil.ShowCreatedAsset(asset);
+
+			// Launched from a StateReference's <New>: queue assigning the new state to those
+			// machines' start state, once the freshly written script has compiled.
+			if (assignTargets != null && assignTargets.Length > 0 && !string.IsNullOrEmpty(startStatePath))
+			{
+				string fullName = string.IsNullOrEmpty(ns) ? className : $"{ns}.{className}";
+				PendingStartState.Queue(fullName, startStatePath, assignTargets);
+			}
+		}
+	};
+
+	/// <summary>
+	/// Defers assigning a freshly-created state to a machine's start state until its script has
+	/// compiled. The request survives the domain reload in SessionState; the target machines are
+	/// tracked by GlobalObjectId so they resolve back to the same objects afterwards.
+	/// </summary>
+	static class PendingStartState
+	{
+		const string TypeKey    = "hoZer.PendingStartState.type";
+		const string PathKey    = "hoZer.PendingStartState.path";
+		const string TargetsKey = "hoZer.PendingStartState.targets";
+
+		public static void Queue(string fullTypeName, string path, UnityEngine.Object[] targets)
+		{
+			string ids = string.Join("|", targets
+				.Where(t => t != null)
+				.Select(t => GlobalObjectId.GetGlobalObjectIdSlow(t).ToString()));
+
+			SessionState.SetString(TypeKey, fullTypeName);
+			SessionState.SetString(PathKey, path);
+			SessionState.SetString(TargetsKey, ids);
+		}
+
+		[UnityEditor.Callbacks.DidReloadScripts]
+		static void Apply()
+		{
+			string fullTypeName = SessionState.GetString(TypeKey, "");
+
+			if (string.IsNullOrEmpty(fullTypeName))
+				return;
+
+			string path       = SessionState.GetString(PathKey, "");
+			string targetsRaw = SessionState.GetString(TargetsKey, "");
+
+			// Clear first so a later, unrelated reload can't replay this assignment.
+			SessionState.EraseString(TypeKey);
+			SessionState.EraseString(PathKey);
+			SessionState.EraseString(TargetsKey);
+
+			Type type = ResolveType(fullTypeName);
+
+			if (type == null)
+				return;
+
+			foreach (string idStr in targetsRaw.Split('|', StringSplitOptions.RemoveEmptyEntries))
+			{
+				if (!GlobalObjectId.TryParse(idStr, out GlobalObjectId gid))
+					continue;
+
+				UnityEngine.Object obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(gid);
+
+				if (obj == null)
+					continue;
+
+				SerializedObject     so        = new(obj);
+				SerializedProperty   stateProp = so.FindProperty(path)?.FindPropertyRelative("_state");
+
+				if (stateProp == null)
+					continue;
+
+				stateProp.managedReferenceValue = Activator.CreateInstance(type);
+				so.ApplyModifiedProperties();
+			};
+		}
+
+		static Type ResolveType(string fullName)
+		{
+			foreach (System.Reflection.Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				Type t = asm.GetType(fullName);
+
+				if (t != null)
+					return t;
+			};
+
+			return null;
 		}
 	};
 };
