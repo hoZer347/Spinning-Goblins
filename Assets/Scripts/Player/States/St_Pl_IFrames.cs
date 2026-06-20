@@ -6,10 +6,10 @@ using UnityEngine;
 /// <summary>
 /// Brief invulnerable window after taking damage. The player is parked, the sprite
 /// blinks, and input is ignored until the i-frames elapse, then we return to Idle.
-/// <see cref="PlayerStateMachine.IsInvulnerable"/> treats this state as immune to damage.
+/// <see cref="PlayerController.IsInvulnerable"/> treats this state as immune to damage.
 /// </summary>
 [Serializable]
-public class St_Pl_IFrames : State<PlayerStateMachine>
+public class St_Pl_IFrames : State<PlayerController>
 {
     private const float BlinkInterval = 0.1f;
 

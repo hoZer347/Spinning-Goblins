@@ -2,7 +2,7 @@ using hoZer;
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	public class ApproachAndLungeController : EnemyController
 	{

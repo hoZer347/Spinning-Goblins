@@ -6,10 +6,10 @@ using UnityEngine;
 /// <summary>
 /// Entered when the player is over a Pit while resting (Idle) or being pulled (Dragging).
 /// The player shrinks and spins as if dropping into the pit, then — for now — respawns
-/// back at the start. <see cref="PlayerStateMachine.IsInvulnerable"/> covers this state.
+/// back at the start. <see cref="PlayerController.IsInvulnerable"/> covers this state.
 /// </summary>
 [Serializable]
-public class St_Pl_Falling : State<PlayerStateMachine>
+public class St_Pl_Falling : State<PlayerController>
 {
     private const float SpinSpeed = 540f; // deg/sec, just for a little flourish
 

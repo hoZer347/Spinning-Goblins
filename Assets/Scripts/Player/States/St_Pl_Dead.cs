@@ -5,7 +5,7 @@ using System;
 
 
 [Serializable]
-public class St_Pl_Dead : State<PlayerStateMachine>
+public class St_Pl_Dead : State<PlayerController>
 {
     private bool _respawning;
 

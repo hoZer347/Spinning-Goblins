@@ -4,7 +4,7 @@ using UnityEngine;
 
 
 [Serializable]
-public class St_Pl_Idle : State<PlayerStateMachine>
+public class St_Pl_Idle : State<PlayerController>
 {
     public override void OnEnter(State lastState)
     {

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using hoZer;
 
 
-public class PlayerStateMachine : StateMachine<PlayerStateMachine>
+public class PlayerController : StateMachine<PlayerController>
 {
     [Header("References")]
     public Rigidbody2D Rigidbody;
@@ -119,8 +119,8 @@ public class PlayerStateMachine : StateMachine<PlayerStateMachine>
 
     private void OnCollisionEnter2D(Collision2D col)
     {
-        // Obstacle tiles bounce automatically via the physics material; nothing to do.
-        if (InMask(col.gameObject.layer, DamageLayer))
+		// Obstacle tiles bounce automatically via the physics material; nothing to do.
+		if (InMask(col.gameObject.layer, DamageLayer))
             TakeDamage();
     }
 
@@ -139,7 +139,12 @@ public class PlayerStateMachine : StateMachine<PlayerStateMachine>
     {
         if (IsInvulnerable) return;
 
-        CameraShake.Shake(ScreenShakeDuration, ScreenShakeMagnitude);
+		
+		CameraController cameraController = FindAnyObjectByType<CameraController>();
+		if (cameraController != null)
+			cameraController.SetState<St_Cm_Shake>();
+
+        //CameraShake.Shake(ScreenShakeDuration, ScreenShakeMagnitude);
 
         // TODO: subtract from a health pool here, only respawn / go to St_Pl_Dead when depleted.
         RespawnAtStart();

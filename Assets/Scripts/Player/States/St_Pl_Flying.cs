@@ -4,7 +4,7 @@ using hoZer;
 
 
 [Serializable]
-public class St_Pl_Flying : State<PlayerStateMachine>
+public class St_Pl_Flying : State<PlayerController>
 {
     private const float RestThreshold = 0.15f;
     private const float MinFlightTime = 0.25f;
