@@ -1,7 +1,7 @@
 using UnityEngine;
 
 
-namespace AdequateGames
+namespace hoZer
 {
 	public class #SCRIPTNAME# : StateMachine<#SCRIPTNAME#>
 	{

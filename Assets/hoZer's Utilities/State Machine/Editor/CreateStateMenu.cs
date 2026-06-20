@@ -132,9 +132,9 @@ namespace hoZer
 				.Replace("#SCRIPTNAME#", className);
 
 			// Match the machine's namespace so the short State<focus> reference resolves
-			// (sub-namespaces of AdequateGames still see the base State type).
+			// (sub-namespaces of hoZer still see the base State type).
 			if (!string.IsNullOrEmpty(ns))
-				content = content.Replace("namespace AdequateGames", $"namespace {ns}");
+				content = content.Replace("namespace hoZer", $"namespace {ns}");
 
 			File.WriteAllText(pathName, content);
 

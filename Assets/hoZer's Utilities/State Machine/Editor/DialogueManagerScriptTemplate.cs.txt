@@ -1,7 +1,7 @@
 using UnityEngine;
 
 
-namespace AdequateGames.Dialogue
+namespace hoZer.Dialogue
 {
 	public class #SCRIPTNAME# : DialogueManager
 	{
