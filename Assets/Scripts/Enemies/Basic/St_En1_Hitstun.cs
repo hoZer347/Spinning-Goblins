@@ -14,8 +14,6 @@ namespace hoZer
 			base.OnEnter(lastState);
 
 			duration.Reset(Focus.hitstunDuration);
-
-			Debug.Log("Enemy hitstun");
 		}
 
 		public override void OnUpdate()

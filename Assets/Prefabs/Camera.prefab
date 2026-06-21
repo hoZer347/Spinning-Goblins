@@ -56,7 +56,7 @@ MonoBehaviour:
   zoomMoveAmount: 10
   zoomAmount: 1
   shakeTime: 0.2
-  shakeAmount: 0.5
+  shakeAmount: 5
   references:
     version: 2
     RefIds:
@@ -97,7 +97,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 156.5647
+  orthographic size: 160
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2

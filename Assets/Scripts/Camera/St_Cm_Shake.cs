@@ -20,9 +20,11 @@ namespace hoZer
 		{
 			base.OnPhysics();
 
+			var r = UnityEngine.Random.insideUnitSphere;
+
 			Focus.transform.position =
 				Focus.OriginalPosition
-				+ UnityEngine.Random.insideUnitSphere
+				+ new Vector3(r.x, r.y, 0)
 				* Focus.shakeAmount;
 
 			if (shakeTime.Tick())

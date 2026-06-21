@@ -50,18 +50,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMachine
   _startState:
     _state:
-      rid: -2
+      rid: 7327565950914658582
   maxSavedStates: 0
   Rigidbody: {fileID: 9110853654709296004}
   Collider: {fileID: 313777376746095868}
   DragLine: {fileID: 1757438519526932735}
   Sprite: {fileID: 7443837218076446409}
   LaunchForceMultiplier: 15
-  MaxDragDistance: 3
+  MaxDragDistance: 25
   LinearDamping: 0.8
   StickyDamping: 8
   StickyThreshold: 3
   Bounciness: 1
+  SnapThreshold: 0.4
   ObstacleLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -71,20 +72,30 @@ MonoBehaviour:
   PitsLayer:
     serializedVersion: 2
     m_Bits: 512
+  ExitLayer:
+    serializedVersion: 2
+    m_Bits: 0
   IFrameDuration: 1
   ScreenShakeDuration: 0.15
   ScreenShakeMagnitude: 0.15
   FallDuration: 0.5
   DeathPanel: {fileID: 0}
+  stopFriction: 5
   SpawnPosition: {x: 0, y: 0}
   OriginalScale: {x: 0, y: 0, z: 0}
   LaunchForce: {x: 0, y: 0}
   DragClickPosition: {x: 0, y: 0}
+  nextScene:
+    sceneAsset: {fileID: 0}
+    scenePath: 
   references:
     version: 2
     RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
+    - rid: 7327565950914658582
+      type: {class: St_Pl_Idle, ns: , asm: Assembly-CSharp}
+      data:
+        gameObject: {fileID: 0}
+        stateMachine: {fileID: 0}
 --- !u!50 &9110853654709296004
 Rigidbody2D:
   serializedVersion: 5
@@ -147,7 +158,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 10
 --- !u!1 &5108492607774381600
 GameObject:
   m_ObjectHideFlags: 0
@@ -174,7 +185,7 @@ Transform:
   m_GameObject: {fileID: 5108492607774381600}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.34466, y: 0.00869, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -225,8 +236,8 @@ LineRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1116172185
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Positions:
@@ -245,8 +256,8 @@ LineRenderer:
         outSlope: 0
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -317,7 +328,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.8583465, y: 4.8583465, z: 4.8583465}
+  m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 352089934075905740}
@@ -369,7 +380,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 193
   m_MaskInteraction: 0
   m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

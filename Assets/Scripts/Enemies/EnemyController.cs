@@ -1,4 +1,6 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 
 namespace hoZer
@@ -29,11 +31,24 @@ namespace hoZer
 		[SerializeField] public float				stopFriction		= 5f;
 
 		[Header("Approach Settings")]
-		[HideInInspector] bool						playerSpotted		= false;
 		[SerializeField] public float				approachSpeed		= 40f;
 
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
+
+		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
+		const float WallCastSkin = 0.05f;
+
+		private void OnDestroy()
+		{
+			EnemyController[] enemyController =
+				GameObject.FindObjectsByType<EnemyController>(
+					FindObjectsSortMode.None);
+
+			if (enemyController.Length == 0)
+				SceneManager.LoadScene(FindAnyObjectByType<CutsceneManager>()
+					.NextScene);
+		}
 
 		private void OnCollisionEnter2D(Collision2D collision)
 		{
@@ -68,6 +83,47 @@ namespace hoZer
 				rigidbody.gravityScale = 0f;
 				rigidbody.useFullKinematicContacts = true;
 			};
+		}
+
+		protected override void OnPhysics()
+		{
+			// Pre-empt the wall bounce. Only while being knocked back (Hitstun / Stopping is the
+			// Dynamic slide) — Wander/Approach move via transform, so they carry no velocity here.
+			if (!(Current is St_En1_Hitstun || Current is St_En1_Stopping))
+				return;
+
+			// Look ahead along the slide direction and react to a hazard BEFORE the collision
+			// resolves, so the body never actually bounces off it.
+			int layer = PredictHazardLayer();
+
+			if (layer == LayerMask.NameToLayer("Damage"))
+				SetState<St_En1_Die>();
+			else if (layer == LayerMask.NameToLayer("Pits"))
+				SetState<St_En1_Falling>();
+		}
+
+		// The layer of a Damage/Pits collider the body is about to slide into this step, or -1.
+		private int PredictHazardLayer()
+		{
+			if (rigidbody == null || collider == null)
+				return -1;
+
+			Vector2 velocity = rigidbody.linearVelocity;
+			float   speed    = velocity.magnitude;
+
+			if (speed < 0.01f)
+				return -1; // not sliding — nothing to pre-empt
+
+			float distance = speed * Time.fixedDeltaTime + WallCastSkin;
+
+			RaycastHit2D hit = Physics2D.CircleCast(
+				collider.bounds.center,
+				collider.bounds.extents.x,
+				velocity / speed,
+				distance,
+				LayerMask.GetMask("Damage", "Pits"));
+
+			return hit.collider != null ? hit.collider.gameObject.layer : -1;
 		}
 
 		protected virtual bool PlayerInRange() =>

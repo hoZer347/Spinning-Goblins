@@ -14806,11 +14806,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7989597764420923089, guid: e76cc246d475ec44c8516e30ba466a54, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -33.94327
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7989597764420923089, guid: e76cc246d475ec44c8516e30ba466a54, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -55.04672
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7989597764420923089, guid: e76cc246d475ec44c8516e30ba466a54, type: 3}
       propertyPath: m_LocalPosition.z
@@ -14846,12 +14846,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8701718317147929960, guid: e76cc246d475ec44c8516e30ba466a54, type: 3}
       propertyPath: NextScene.scenePath
-      value: Assets/Scenes/Levels/Level 3.unity
+      value: Assets/Scenes/Menu/Outro Cutscene.unity
       objectReference: {fileID: 0}
     - target: {fileID: 8701718317147929960, guid: e76cc246d475ec44c8516e30ba466a54, type: 3}
       propertyPath: NextScene.sceneAsset
       value: 
-      objectReference: {fileID: 102900000, guid: f9561bf718061f2499b42948b309b964, type: 3}
+      objectReference: {fileID: 102900000, guid: 1eef6a9333bbd7c48be2206efca267e0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
