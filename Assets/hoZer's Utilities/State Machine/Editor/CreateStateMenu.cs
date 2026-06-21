@@ -10,7 +10,7 @@ using UnityEngine;
 namespace hoZer
 {
 	/// <summary>
-	/// Adds "Create > Adequate Games > State" to the Project window, spawning a new
+	/// Adds "Create > hoZer's Utilities > State" to the Project window, spawning a new
 	/// St_ state script pre-filled from StateScriptTemplate.cs.txt. #SCRIPTNAME# is
 	/// replaced with whatever the user types when naming the asset.
 	/// </summary>
@@ -34,7 +34,7 @@ namespace hoZer
 			return i >= 0 ? dir.Substring(i + 1) : dir;
 		}
 
-		[MenuItem("Assets/Create/Adequate Games/State", false, 80)]
+		[MenuItem("Assets/Create/hoZer's Utilities/State", false, 80)]
 		static void CreateState()
 		{
 			ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "St_NewState.cs");
@@ -42,7 +42,7 @@ namespace hoZer
 
 		// Greys the menu entry out if the template file is missing rather than
 		// silently creating an empty script.
-		[MenuItem("Assets/Create/Adequate Games/State", true)]
+		[MenuItem("Assets/Create/hoZer's Utilities/State", true)]
 		static bool CreateStateValidate()
 		{
 			return AssetDatabase.LoadAssetAtPath<TextAsset>(templatePath) != null;
@@ -50,26 +50,26 @@ namespace hoZer
 
 		// #SCRIPTNAME# fills both the class name and the StateMachine<...> focus, so the
 		// built-in template replacement is enough (no custom action needed).
-		[MenuItem("Assets/Create/Adequate Games/State Machine", false, 81)]
+		[MenuItem("Assets/Create/hoZer's Utilities/State Machine", false, 81)]
 		static void CreateStateMachine()
 		{
 			ProjectWindowUtil.CreateScriptAssetFromTemplateFile(machineTemplatePath, "NewStateMachine.cs");
 		}
 
-		[MenuItem("Assets/Create/Adequate Games/State Machine", true)]
+		[MenuItem("Assets/Create/hoZer's Utilities/State Machine", true)]
 		static bool CreateStateMachineValidate()
 		{
 			return AssetDatabase.LoadAssetAtPath<TextAsset>(machineTemplatePath) != null;
 		}
 
 		// Creates a DialogueManager subclass with an example [DialogueBinding] method.
-		[MenuItem("Assets/Create/Adequate Games/Dialogue", false, 82)]
+		[MenuItem("Assets/Create/hoZer's Utilities/Dialogue", false, 82)]
 		static void CreateDialogue()
 		{
 			ProjectWindowUtil.CreateScriptAssetFromTemplateFile(dialogueTemplatePath, "NewDialogueManager.cs");
 		}
 
-		[MenuItem("Assets/Create/Adequate Games/Dialogue", true)]
+		[MenuItem("Assets/Create/hoZer's Utilities/Dialogue", true)]
 		static bool CreateDialogueValidate()
 		{
 			return AssetDatabase.LoadAssetAtPath<TextAsset>(dialogueTemplatePath) != null;
