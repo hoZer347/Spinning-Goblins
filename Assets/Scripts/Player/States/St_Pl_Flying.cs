@@ -46,6 +46,12 @@ public class St_Pl_Flying : St_Pl_Base
         float speed = Focus.Rigidbody.linearVelocity.magnitude;
         if (speed <= 0f || speed >= Focus.StickyThreshold) return;
 
+        if (speed < Focus.SnapThreshold)
+        {
+            Focus.Rigidbody.linearVelocity = Vector2.zero;
+            return;
+        }
+
         float t = 1f - (speed / Focus.StickyThreshold);
         Focus.Rigidbody.linearVelocity *= Mathf.Max(0f, 1f - t * Focus.StickyDamping * Time.fixedDeltaTime);
     }

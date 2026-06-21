@@ -19,11 +19,14 @@ public class PlayerController : StateMachine<PlayerController>
 	[Range(0f, 20f)] public float StickyDamping = 8f;
 	[Range(0f, 10f)] public float StickyThreshold = 3f;
 	[Range(0f, 1f)] public float Bounciness = 1f;
+	[Tooltip("Speed below which the player snaps immediately to zero.")]
+	[Range(0f, 2f)] public float SnapThreshold = 0.4f;
 
 	[Header("Tilemap Layers")]
 	public LayerMask ObstacleLayer; // bounce only, handled entirely by the physics material
 	public LayerMask DamageLayer;   // hurts the player on contact
 	public LayerMask PitsLayer;     // swallows the player while Idle / Dragging
+	public LayerMask ExitLayer;     // triggers next-level load on center-point overlap
 
 	[Header("Damage / I-Frames")]
 	public float IFrameDuration = 1f;
@@ -63,12 +66,11 @@ public class PlayerController : StateMachine<PlayerController>
 			bounciness = Bounciness,
 		};
 
-		// Pass straight through Pit tiles instead of bouncing off them. Pits are detected
-		// purely by the center-point query in IsCenterOverPit, so we exclude the layer from
-		// physical collision. Done in code so it survives scene reserialization and does not
-		// depend on the Pit collider's "Is Trigger" flag.
+		// Pass straight through Pit and Exit tiles instead of bouncing off them. Both are
+		// detected purely by center-point queries, so we exclude the layers from physical
+		// collision. Done in code so it survives scene reserialization.
 		if (Collider != null)
-			Collider.excludeLayers = Collider.excludeLayers.value | PitsLayer.value;
+			Collider.excludeLayers = Collider.excludeLayers.value | PitsLayer.value | ExitLayer.value;
 
 		if (Sprite == null) Sprite = GetComponentInChildren<SpriteRenderer>();
 		if (DeathPanel != null) DeathPanel.SetActive(false);
@@ -86,7 +88,20 @@ public class PlayerController : StateMachine<PlayerController>
 		return Physics2D.OverlapPoint(Collider.bounds.center, PitsLayer) != null;
 	}
 
+	/// <summary>True when the player's center point lies inside an exit zone cell.</summary>
+	public bool IsCenterOverExit()
+	{
+		if (Collider == null) return false;
+		return Physics2D.OverlapPoint(Collider.bounds.center, ExitLayer) != null;
+	}
+
 	public bool IsDamageLayer(int layer) => (DamageLayer.value & (1 << layer)) != 0;
+
+	protected override void OnUpdate()
+	{
+		if (!IsInvulnerable && IsCenterOverExit())
+			GameManager.Instance?.LoadNextLevel();
+	}
 
 	/// <summary>Kicks the camera's own state machine into its shake state, if one exists.</summary>
 	public void ShakeCamera()
