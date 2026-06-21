@@ -7,6 +7,7 @@ namespace hoZer
 	[Serializable]
 	public class St_En1_Wander : State<EnemyController>
 	{
+		Duration timeWandering;
 		Vector2 direction;
 		float wanderDistance;
 
@@ -19,6 +20,11 @@ namespace hoZer
 				UnityEngine.Random.Range(
 					Focus.wanderDistanceMin,
 					Focus.wanderDistanceMax);
+
+			timeWandering.Reset(
+				UnityEngine.Random.Range(
+					Focus.wanderTimeMin,
+					Focus.wanderTimeMax));
 		}
 
 		public override void OnPhysics()
@@ -38,6 +44,9 @@ namespace hoZer
 					+ direction
 					* wanderDistance)
 				>= wanderDistance)
+				SetState<St_En1_Wait>();
+
+			if (timeWandering.Tick())
 				SetState<St_En1_Wait>();
 		}
 	};

@@ -27,7 +27,7 @@ namespace hoZer
 			};
 
 			if (Focus.rigidbody.linearVelocity.magnitude < RestThreshold)
-				SetState<St_En1_Wait>();
+				SetState<St_En1_Approach>();
 		}
 
 		public override void OnPhysics()

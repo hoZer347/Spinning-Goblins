@@ -21,10 +21,31 @@ namespace hoZer
 		[SerializeField] public float				wanderSpeed			= 1.0f;
 		[SerializeField] public float				wanderDistanceMin	= 1.0f;
 		[SerializeField] public float				wanderDistanceMax	= 3.0f;
-		
+		[SerializeField] public float				wanderTimeMin		= 1.0f;
+		[SerializeField] public float				wanderTimeMax		= 3.0f;
+
 		[Header("Hitstun Settings")]
-		public float hitstunDuration = 0.5f;
-		public float stopFriction = 5f;
+		[SerializeField] public float				hitstunDuration		= 0.5f;
+		[SerializeField] public float				stopFriction		= 5f;
+
+		[Header("Approach Settings")]
+		[HideInInspector] bool						playerSpotted		= false;
+		[SerializeField] public float				approachSpeed		= 40f;
+
+		private void OnCollisionEnter2D(Collision2D collision)
+		{
+			// gameObject.layer is a layer INDEX (e.g. 8); LayerMask.GetMask returns a BITMASK
+			// (e.g. 256). Comparing them is never true — use NameToLayer to compare indices.
+			int layer = collision.gameObject.layer;
+
+			if (Current is St_En1_Hitstun)
+			{
+				if (layer == LayerMask.NameToLayer("Damage"))
+					SetState<St_En1_Die>();
+				else if (layer == LayerMask.NameToLayer("Pits"))
+					SetState<St_En1_Falling>();
+			};
+		}
 
 		protected override void OnStart()
 		{
@@ -35,6 +56,15 @@ namespace hoZer
 			if (collider == null)         collider         = GetComponent<Collider2D>();
 			if (spriteRenderer == null)   spriteRenderer   = GetComponent<SpriteRenderer>();
 			if (playerController == null) playerController = FindAnyObjectByType<PlayerController>();
+
+			if (rigidbody != null)
+			{
+				// Top-down game: no gravity. And a Kinematic body only fires OnCollisionEnter2D
+				// against the static walls/hazards when full kinematic contacts are enabled —
+				// without this, kinematic-vs-static collisions are silent.
+				rigidbody.gravityScale = 0f;
+				rigidbody.useFullKinematicContacts = true;
+			}
 		}
 
 		protected virtual bool PlayerInRange() =>
