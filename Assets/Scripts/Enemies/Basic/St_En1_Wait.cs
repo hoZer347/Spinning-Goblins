@@ -24,6 +24,12 @@ namespace hoZer
 
 			if (_waitUntilWander.Tick())
 				SetState<St_En1_Wander>();
+
+			if (Vector3.Distance(
+					Focus.transform.position,
+					Focus.playerController.transform.position)
+				<= Focus.detectionRadius)
+				SetState<St_En1_Approach>();
 		}
 	};
 };

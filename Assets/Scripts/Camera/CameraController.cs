@@ -23,6 +23,9 @@ namespace hoZer
 			base.OnStart();
 
 			originalPosition = transform.position;
+
+			if (playerController == null)
+				playerController = FindAnyObjectByType<PlayerController>();
 		}
 	};
 };

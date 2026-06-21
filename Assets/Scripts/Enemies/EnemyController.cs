@@ -32,6 +32,9 @@ namespace hoZer
 		[HideInInspector] bool						playerSpotted		= false;
 		[SerializeField] public float				approachSpeed		= 40f;
 
+		[Header("Death Settings")]
+		[SerializeField] public float				fallingDuration		= 1.0f;
+
 		private void OnCollisionEnter2D(Collision2D collision)
 		{
 			// gameObject.layer is a layer INDEX (e.g. 8); LayerMask.GetMask returns a BITMASK
@@ -64,7 +67,7 @@ namespace hoZer
 				// without this, kinematic-vs-static collisions are silent.
 				rigidbody.gravityScale = 0f;
 				rigidbody.useFullKinematicContacts = true;
-			}
+			};
 		}
 
 		protected virtual bool PlayerInRange() =>

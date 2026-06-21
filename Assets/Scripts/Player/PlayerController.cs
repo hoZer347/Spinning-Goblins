@@ -1,5 +1,6 @@
 using UnityEngine;
 using hoZer;
+using Tymski;
 
 
 public class PlayerController : StateMachine<PlayerController>
@@ -46,6 +47,9 @@ public class PlayerController : StateMachine<PlayerController>
 	[HideInInspector] public Vector3 OriginalScale;
 	[HideInInspector] public Vector2 LaunchForce;
 	[HideInInspector] public Vector2 DragClickPosition;
+
+	[Header("Scene Management")]
+	[SerializeField] public SceneReference nextScene;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -100,6 +104,9 @@ public class PlayerController : StateMachine<PlayerController>
 	protected override void OnUpdate()
 	{
 		if (!IsInvulnerable && IsCenterOverExit())
+			GameManager.Instance?.RestartLevel();
+
+		if (GameObject.FindAnyObjectByType<EnemyController>() == null)
 			GameManager.Instance?.LoadNextLevel();
 	}
 

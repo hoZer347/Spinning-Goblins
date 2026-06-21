@@ -27,6 +27,17 @@ namespace hoZer
 					Focus.wanderTimeMax));
 		}
 
+		public override void OnUpdate()
+		{
+			base.OnUpdate();
+
+			if (Vector3.Distance(
+					Focus.transform.position,
+					Focus.playerController.transform.position)
+				<= Focus.detectionRadius)
+				SetState<St_En1_Approach>();
+		}
+
 		public override void OnPhysics()
 		{
 			base.OnPhysics();

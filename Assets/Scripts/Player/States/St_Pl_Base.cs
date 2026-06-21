@@ -21,7 +21,10 @@ public abstract class St_Pl_Base : State<PlayerController>
 		EnemyController enemyController = other.GetComponent<EnemyController>();
 		if (enemyController != null
 			&& Focus.Current is St_Pl_Flying)
+		{
+			Focus.ShakeCamera();
 			enemyController.SetState<St_En1_Hitstun>();
+		};
 
 		if (Focus.IsDamageLayer(other.gameObject.layer))
             OnDamage();
