@@ -16,7 +16,7 @@ public class St_Pl_Flying : St_Pl_Base
     {
         _elapsed = 0f;
         Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
-        Focus.Rigidbody.linearDamping = Focus.LinearDamping;
+        Focus.Rigidbody.linearDamping = 0f; // we apply all deceleration manually in OnPhysics
         Focus.Rigidbody.AddForce(Focus.LaunchForce, ForceMode2D.Impulse);
     }
 
@@ -44,16 +44,20 @@ public class St_Pl_Flying : St_Pl_Base
     private void ApplyStickyDamping()
     {
         float speed = Focus.Rigidbody.linearVelocity.magnitude;
-        if (speed <= 0f || speed >= Focus.StickyThreshold) return;
+        if (speed <= 0f) return;
 
+        // Hard snap at very low speeds.
         if (speed < Focus.SnapThreshold)
         {
             Focus.Rigidbody.linearVelocity = Vector2.zero;
             return;
         }
 
-        float t = 1f - (speed / Focus.StickyThreshold);
-        Focus.Rigidbody.linearVelocity *= Mathf.Max(0f, 1f - t * Focus.StickyDamping * Time.fixedDeltaTime);
+        // Blend from LinearDamping at high speed to LinearDamping+StickyDamping near zero.
+        // t=0 above threshold (base drag only), t=1 at zero speed (full sticky).
+        float t = 1f - Mathf.Clamp01(speed / Focus.StickyThreshold);
+        float totalDamp = Focus.LinearDamping + t * Focus.StickyDamping;
+        Focus.Rigidbody.linearVelocity *= Mathf.Max(0f, 1f - totalDamp * Time.fixedDeltaTime);
     }
 
     private void BounceOffScreenEdges()

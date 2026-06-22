@@ -439,6 +439,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3623482448210441735}
   - component: {fileID: 7443837218076446409}
+  - component: {fileID: 5232216470506222005}
   m_Layer: 0
   m_Name: Sprite
   m_TagString: Untagged
@@ -455,8 +456,8 @@ Transform:
   m_GameObject: {fileID: 7747438675030921442}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0.0135, z: 0}
+  m_LocalScale: {x: 0.058927357, y: 0.058927357, z: 0.058927357}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 352089934075905740}
@@ -510,7 +511,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 193
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 3788476935322476542, guid: a90f38c8ce08a514da17a6d1976193cc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -520,3 +521,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &5232216470506222005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7747438675030921442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cec6fcfd70823ec4093d21d22228c5d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteAnimator
+  DragMaxStretch: 0.5
+  SpinRate: 60
+  FlightStretch: 0.4
+  SquashAmount: 0.4
+  SquashDuration: 0.1
+  PostStretchTime: 0.15
+  WallLookaheadDist: 0.8
+  ScaleSmoothing: 16

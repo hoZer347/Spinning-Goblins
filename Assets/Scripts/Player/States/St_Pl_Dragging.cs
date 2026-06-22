@@ -1,5 +1,6 @@
 using hoZer;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,8 +8,10 @@ using UnityEngine.InputSystem;
 [Serializable]
 public class St_Pl_Dragging : St_Pl_Base
 {
+    private const int MaxLineBounces = 1;
+
     private Vector2 _origin;
-	Duration _wooshSFXDelay;
+    Duration _wooshSFXDelay;
 
     public override void OnEnter(State lastState)
     {
@@ -19,13 +22,14 @@ public class St_Pl_Dragging : St_Pl_Base
         if (Focus.DragLine != null)
         {
             Focus.DragLine.enabled = true;
-            Focus.DragLine.positionCount = 2;
+            Focus.DragLine.positionCount = 0;
             Focus.DragLine.startWidth = 0.04f;
             Focus.DragLine.endWidth = 0.01f;
-        };
+        }
+        ;
 
-		Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
-	}
+        Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
+    }
 
     public override void OnUpdate()
     {
@@ -85,6 +89,8 @@ public class St_Pl_Dragging : St_Pl_Base
         // back to the drag origin — the flight begins from where the player starts moving.
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
 
+        Focus.audioSource.PlayOneShot(Focus.spinWoosh);
+    }
         Focus.audioSource.PlayOneShot(Focus.spinWoosh);
     }
 }

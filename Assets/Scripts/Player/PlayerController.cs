@@ -12,18 +12,21 @@ public class PlayerController : StateMachine<PlayerController>
 	public SpriteRenderer Sprite;
 
 	[Header("Launch")]
-	public float LaunchForceMultiplier = 7f;
+	public float LaunchForceMultiplier = 18f;
 	public float MaxDragDistance = 2.5f;
 	[Tooltip("How far the body visually stretches relative to the pull (1 = full, lower = more compressed). Launch power is unaffected.")]
 	[Range(0.05f, 1f)] public float StretchCompression = 0.5f;
 
 	[Header("Movement")]
-	[Range(0f, 10f)] public float LinearDamping = 3f;
-	[Range(0f, 20f)] public float StickyDamping = 8f;
-	[Range(0f, 10f)] public float StickyThreshold = 3f;
+	[Tooltip("Base deceleration applied at all speeds.")]
+	[Range(0f, 30f)] public float LinearDamping = 26f;
+	[Tooltip("Extra deceleration added on top of LinearDamping below StickyThreshold.")]
+	[Range(0f, 60f)] public float StickyDamping = 42f;
+	[Tooltip("Speed at which sticky damping starts blending in.")]
+	[Range(0f, 30f)] public float StickyThreshold = 24f;
 	[Range(0f, 1f)] public float Bounciness = 1f;
 	[Tooltip("Speed below which the player snaps immediately to zero.")]
-	[Range(0f, 2f)] public float SnapThreshold = 0.4f;
+	[Range(0f, 5f)] public float SnapThreshold = 1.5f;
 
 	[Header("Tilemap Layers")]
 	public LayerMask ObstacleLayer; // bounce only, handled entirely by the physics material
