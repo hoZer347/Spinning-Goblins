@@ -12,6 +12,14 @@ public class St_Pl_Idle : St_Pl_Base
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
+
+        // If the button is already held when we settle into Idle (e.g. held through Stopping),
+        // begin dragging immediately without waiting for a new press.
+        if (Mouse.current.leftButton.isPressed)
+        {
+            Focus.DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            SetState<St_Pl_Dragging>();
+        }
     }
 
     public override void OnUpdate()

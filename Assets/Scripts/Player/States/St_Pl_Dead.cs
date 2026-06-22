@@ -27,15 +27,14 @@ public class St_Pl_Dead : St_Pl_Base
         if (clicked || spaced) Respawn();
     }
 
-    // Called by the respawn button's UnityEvent in the Inspector as well
+    // Called by the respawn button's UnityEvent in the Inspector as well.
+    // Restarts the run via GameManager — skips tutorial if already completed.
     public void Respawn()
     {
         if (_respawning) return;
         _respawning = true;
-
         if (Focus.DeathPanel != null) Focus.DeathPanel.SetActive(false);
-        Focus.RespawnAtStart();
-        SetState<St_Pl_Idle>();
+        GameManager.Instance?.RestartGame(Focus);
     }
 
     public override void OnExit(State nextState)

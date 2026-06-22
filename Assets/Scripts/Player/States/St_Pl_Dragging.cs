@@ -39,7 +39,11 @@ public class St_Pl_Dragging : St_Pl_Base
         Vector2 dragVec = mouseWorld - Focus.DragClickPosition;
 
         if (dragVec.magnitude > Focus.MaxDragDistance)
+        {
             dragVec = dragVec.normalized * Focus.MaxDragDistance;
+            Vector2 clampedScreen = Camera.main.WorldToScreenPoint(Focus.DragClickPosition + dragVec);
+            Mouse.current.WarpCursorPosition(clampedScreen);
+        }
 
         // Launch power comes from the FULL pull, so compression and the wall / screen clamping
         // below never weaken the shot — same output velocity however far the body stretches.

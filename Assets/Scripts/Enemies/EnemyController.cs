@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.Audio;
-using UnityEngine.SceneManagement;
 
 
 namespace hoZer
@@ -28,6 +26,7 @@ namespace hoZer
 
 		[Header("Hitstun Settings")]
 		[SerializeField] public float				hitstunDuration		= 0.5f;
+		[SerializeField] public float				hitstunKnockback	= 18f;
 		[SerializeField] public float				stopFriction		= 5f;
 		[SerializeField] public float				pauseDuration		= 1.0f;
 
@@ -52,6 +51,7 @@ namespace hoZer
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
 
+<<<<<<< Updated upstream
 		[Header("Health")]
 		[SerializeField] public int					maxHealth			= 3;
 		[SerializeField] public float				damageCooldown		= 0.25f;
@@ -60,6 +60,14 @@ namespace hoZer
 		int				health;
 		float			damageReadyAt;
 		EnemyHealthBar	healthBar;
+=======
+		[Header("Spawning")]
+		[Tooltip("How much of the enemy budget this prefab costs when spawned by LevelSpawner.")]
+		[SerializeField] public float				spawnCost			= 1f;
+		[Tooltip("Max hits before this enemy dies. Each hitstun = one hit.")]
+		[SerializeField] public int					maxHealth			= 3;
+		[HideInInspector] public int				currentHealth;
+>>>>>>> Stashed changes
 
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
@@ -71,13 +79,18 @@ namespace hoZer
 
 		private void OnDestroy()
 		{
-			EnemyController[] enemyController =
-				GameObject.FindObjectsByType<EnemyController>(
-					FindObjectsSortMode.None);
+			if (!Application.isPlaying) return;
 
-			if (Application.isPlaying && enemyController.Length == 0)
-				SceneManager.LoadScene(FindAnyObjectByType<CutsceneManager>()
-					.NextScene);
+			GameManager gm = GameManager.Instance;
+			if (gm == null) return;
+
+			gm.OnEnemyKilled();
+
+			EnemyController[] remaining =
+				GameObject.FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+
+			if (remaining.Length == 0)
+				gm.LoadNextLevel();
 		}
 
 		private void OnCollisionEnter2D(Collision2D collision)
@@ -140,6 +153,8 @@ namespace hoZer
 			if (spriteRenderer == null)   spriteRenderer   = GetComponent<SpriteRenderer>();
 			if (playerController == null) playerController = FindAnyObjectByType<PlayerController>();
 			if (audioSource == null)	  audioSource = GetComponent<AudioSource>();
+
+			currentHealth = maxHealth;
 
 			if (rigidbody != null)
 			{

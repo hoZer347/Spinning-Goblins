@@ -45,6 +45,10 @@ public class PlayerController : StateMachine<PlayerController>
 	[Header("Death UI")]
 	public GameObject DeathPanel;
 
+	[Header("Health")]
+	public int MaxHealth = 5;
+	[HideInInspector] public int CurrentHealth;
+
 	[Header("Stopping")]
 	[SerializeField] public float stopFriction = 5f;
 
@@ -91,6 +95,10 @@ public class PlayerController : StateMachine<PlayerController>
 
 	float _spinTimer;
 	AudioSource spinSource;
+	bool _hadEnemiesThisLevel;
+
+	/// <summary>Velocity from the previous FixedUpdate — before collision resolution flips it.</summary>
+	[HideInInspector] public Vector2 PreImpactVelocity;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -99,6 +107,7 @@ public class PlayerController : StateMachine<PlayerController>
 
 	protected override void OnStart()
 	{
+		CurrentHealth = MaxHealth;
 		SpawnPosition = transform.position;
 		OriginalScale = transform.localScale;
 
@@ -172,13 +181,24 @@ public class PlayerController : StateMachine<PlayerController>
 
 	public bool IsObstacleLayer(int layer) => (ObstacleLayer.value & (1 << layer)) != 0;
 
+	protected override void OnPhysics()
+	{
+		PreImpactVelocity = Rigidbody.linearVelocity;
+	}
+
 	protected override void OnUpdate()
 	{
 		if (!IsInvulnerable && IsCenterOverExit())
 			GameManager.Instance?.RestartLevel();
 
-		if (GameObject.FindAnyObjectByType<EnemyController>() == null)
-			GameManager.Instance?.LoadNextLevel();
+		if (!_hadEnemiesThisLevel)
+			_hadEnemiesThisLevel = FindAnyObjectByType<EnemyController>() != null;
+
+		if (_hadEnemiesThisLevel
+			&& FindAnyObjectByType<EnemyController>() == null
+			&& GameManager.Instance != null
+			&& !(GameManager.Instance.Current is St_Gm_Transitioning))
+			GameManager.Instance.LoadNextLevel();
 	}
 
 	/// <summary>Kicks the camera's own state machine into its shake state, if one exists.</summary>
