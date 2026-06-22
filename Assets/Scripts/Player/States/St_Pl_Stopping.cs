@@ -22,7 +22,7 @@ namespace hoZer
 
 		public override void OnUpdate()
 		{
-			if (Focus.IsCenterOverPit())
+			if (Focus.IsFullyInsidePit())
 			{
 				SetState<St_Pl_Falling>();
 				return;

@@ -14,6 +14,8 @@ public class PlayerController : StateMachine<PlayerController>
 	[Header("Launch")]
 	public float LaunchForceMultiplier = 7f;
 	public float MaxDragDistance = 2.5f;
+	[Tooltip("How far the body visually stretches relative to the pull (1 = full, lower = more compressed). Launch power is unaffected.")]
+	[Range(0.05f, 1f)] public float StretchCompression = 0.5f;
 
 	[Header("Movement")]
 	[Range(0f, 10f)] public float LinearDamping = 3f;
@@ -72,6 +74,10 @@ public class PlayerController : StateMachine<PlayerController>
 		Rigidbody.gravityScale = 0f;
 		Rigidbody.linearDamping = LinearDamping;
 
+		// Register contacts while Kinematic (Idle / Dragging) so the player can be hit by — and
+		// collide with — static walls and Damage tiles mid-drag, not only dynamic enemies.
+		Rigidbody.useFullKinematicContacts = true;
+
 		// Elastic bounce off any solid tile (Obstacle / Damage) with no per-collider setup.
 		Rigidbody.sharedMaterial = new PhysicsMaterial2D("PlayerBounce")
 		{
@@ -97,13 +103,21 @@ public class PlayerController : StateMachine<PlayerController>
 
 	// --- Queries & effects for states to use. No transitions are decided here. ----------
 
-	/// <summary>True when the player's center point lies inside a pit cell.</summary>
-	public bool IsCenterOverPit()
+	/// <summary>True only when the player's entire collider footprint sits over pit cells, so it
+	/// drops in after sliding fully past the edge rather than the instant it brushes one.</summary>
+	public bool IsFullyInsidePit()
 	{
 		if (Collider == null) return false;
-		// Only the player's center point counts, so brushing a pit edge won't drop you in.
-		return Physics2D.OverlapPoint(Collider.bounds.center, PitsLayer) != null;
+
+		Bounds b = Collider.bounds;
+
+		return OverPit(new Vector2(b.min.x, b.min.y))
+			&& OverPit(new Vector2(b.min.x, b.max.y))
+			&& OverPit(new Vector2(b.max.x, b.min.y))
+			&& OverPit(new Vector2(b.max.x, b.max.y));
 	}
+
+	private bool OverPit(Vector2 point) => Physics2D.OverlapPoint(point, PitsLayer) != null;
 
 	/// <summary>True when the player's center point lies inside an exit zone cell.</summary>
 	public bool IsCenterOverExit()
@@ -142,7 +156,7 @@ public class PlayerController : StateMachine<PlayerController>
 		transform.localScale = OriginalScale;
 		transform.rotation = Quaternion.identity;
 
-		// Push the move into the physics world immediately so the next IsCenterOverPit() query
+		// Push the move into the physics world immediately so the next IsFullyInsidePit() query
 		// reads the new position, instead of the stale (pit) location it held pre-respawn.
 		Physics2D.SyncTransforms();
 	}

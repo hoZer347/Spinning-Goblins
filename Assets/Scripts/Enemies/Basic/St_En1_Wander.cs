@@ -42,10 +42,12 @@ namespace hoZer
 		{
 			base.OnPhysics();
 
-			Focus.transform.position +=
-				(Vector3)(direction
-					* Focus.wanderSpeed
-					* Time.fixedDeltaTime);
+			// Wander, but turn back to Wait (re-pick a direction) if a pit/damage edge blocks us.
+			if (!Focus.MoveSafely(direction * Focus.wanderSpeed * Time.fixedDeltaTime))
+			{
+				SetState<St_En1_Wait>();
+				return;
+			};
 
 			if (Vector2.Distance(
 					Focus.transform.position,

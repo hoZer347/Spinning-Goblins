@@ -61,13 +61,10 @@ namespace hoZer
 			// (e.g. 256). Comparing them is never true — use NameToLayer to compare indices.
 			int layer = collision.gameObject.layer;
 
-			if (Current is St_En1_Hitstun)
-			{
-				if (layer == LayerMask.NameToLayer("Damage"))
-					SetState<St_En1_Die>();
-				else if (layer == LayerMask.NameToLayer("Pits"))
-					SetState<St_En1_Falling>();
-			};
+			// Pits are handled by the IsFullyInsidePit check in OnPhysics (drop in only once the
+			// whole body is inside), so only Damage walls are reacted to on contact here.
+			if (Current is St_En1_Hitstun && layer == LayerMask.NameToLayer("Damage"))
+				SetState<St_En1_Die>();
 		}
 
 		protected override void OnStart()
@@ -89,47 +86,49 @@ namespace hoZer
 				rigidbody.gravityScale = 0f;
 				rigidbody.useFullKinematicContacts = true;
 			};
+
+			// Slide over Pit tiles instead of bouncing off their solid edge, so the body can get
+			// fully inside before it drops in. The IsFullyInsidePit query ignores this exclusion.
+			if (collider != null)
+				collider.excludeLayers = collider.excludeLayers.value | LayerMask.GetMask("Pits");
 		}
 
 		protected override void OnPhysics()
 		{
-			// Pre-empt the wall bounce. Only while being knocked back (Hitstun / Stopping is the
-			// Dynamic slide) — Wander/Approach move via transform, so they carry no velocity here.
-			if (!(Current is St_En1_Hitstun || Current is St_En1_Stopping))
-				return;
-
-			// Look ahead along the slide direction and react to a hazard BEFORE the collision
-			// resolves, so the body never actually bounces off it.
-			int layer = PredictHazardLayer();
-
-			if (layer == LayerMask.NameToLayer("Damage"))
-				SetState<St_En1_Die>();
-			else if (layer == LayerMask.NameToLayer("Pits"))
+			// Drop into a pit only once the whole collider is inside it — the body slides past the
+			// edge first. Runs in any moving state, but not while already dying / falling.
+			if (!(Current is St_En1_Falling || Current is St_En1_Die) && IsFullyInsidePit())
+			{
 				SetState<St_En1_Falling>();
+				return;
+			};
+
+			// Pre-empt the Damage-wall bounce during the knockback slide (Hitstun / Stopping are
+			// the Dynamic phase; Wander/Approach move via transform and carry no velocity here).
+			if ((Current is St_En1_Hitstun || Current is St_En1_Stopping) && DamageWallAhead())
+				SetState<St_En1_Die>();
 		}
 
-		// The layer of a Damage/Pits collider the body is about to slide into this step, or -1.
-		private int PredictHazardLayer()
+		// True if a Damage wall is within this step's travel, so we react before bouncing off it.
+		private bool DamageWallAhead()
 		{
 			if (rigidbody == null || collider == null)
-				return -1;
+				return false;
 
 			Vector2 velocity = rigidbody.linearVelocity;
 			float   speed    = velocity.magnitude;
 
 			if (speed < 0.01f)
-				return -1; // not sliding — nothing to pre-empt
+				return false; // not sliding — nothing to pre-empt
 
 			float distance = speed * Time.fixedDeltaTime + WallCastSkin;
 
-			RaycastHit2D hit = Physics2D.CircleCast(
+			return Physics2D.CircleCast(
 				collider.bounds.center,
 				collider.bounds.extents.x,
 				velocity / speed,
 				distance,
-				LayerMask.GetMask("Damage", "Pits"));
-
-			return hit.collider != null ? hit.collider.gameObject.layer : -1;
+				LayerMask.GetMask("Damage")).collider != null;
 		}
 
 		protected virtual bool PlayerInRange() =>
@@ -137,11 +136,48 @@ namespace hoZer
 				transform.position,
 				playerController.transform.position) <= detectionRadius;
 
-		public bool IsCenterOverPit()
+		// True only when the enemy's entire collider footprint sits over Pit tiles, so it drops in
+		// after sliding fully past the edge rather than the instant it brushes one.
+		public bool IsFullyInsidePit()
 		{
 			if (collider == null) return false;
-			// Only the player's center point counts, so brushing a pit edge won't drop you in.
-			return Physics2D.OverlapPoint(collider.bounds.center, LayerMask.GetMask("Pits")) != null;
+
+			Bounds b = collider.bounds;
+
+			return OverPit(new Vector2(b.min.x, b.min.y))
+				&& OverPit(new Vector2(b.min.x, b.max.y))
+				&& OverPit(new Vector2(b.max.x, b.min.y))
+				&& OverPit(new Vector2(b.max.x, b.max.y));
+		}
+
+		private bool OverPit(Vector2 point) =>
+			Physics2D.OverlapPoint(point, LayerMask.GetMask("Pits")) != null;
+
+		// Moves the enemy by `displacement`, but refuses a step that would walk it from clear
+		// ground onto a Pit or Damage tile (it can still be knocked onto them). Returns true if
+		// it actually moved.
+		public bool MoveSafely(Vector2 displacement)
+		{
+			if (collider == null || displacement == Vector2.zero)
+			{
+				transform.position += (Vector3)displacement;
+				return true;
+			};
+
+			int     mask   = LayerMask.GetMask("Pits", "Damage");
+			Vector2 center = collider.bounds.center;
+			float   radius = collider.bounds.extents.x;
+
+			// Allow the move if we're already on a hazard (so a knocked-back enemy can climb out),
+			// but never step onto one from safe ground.
+			bool onHazardNow  = Physics2D.OverlapCircle(center, radius, mask) != null;
+			bool onHazardNext = Physics2D.OverlapCircle(center + displacement, radius, mask) != null;
+
+			if (!onHazardNow && onHazardNext)
+				return false;
+
+			transform.position += (Vector3)displacement;
+			return true;
 		}
 
 #if UNITY_EDITOR

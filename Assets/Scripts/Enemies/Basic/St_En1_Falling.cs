@@ -19,7 +19,7 @@ namespace hoZer
 			originalPosition = Focus.transform.position;
 
 			timeFalling.Reset(Focus.fallingDuration);
-			
+
 			Focus.collider.enabled = false;
 		}
 

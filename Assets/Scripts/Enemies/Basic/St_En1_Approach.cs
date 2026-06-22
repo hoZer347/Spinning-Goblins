@@ -23,10 +23,8 @@ namespace hoZer
 				- Focus.transform.position)
 				.normalized;
 
-			Focus.transform.position
-				+= direction
-				* Focus.approachSpeed
-				* Time.deltaTime;
+			// Chase the player, but never step onto a pit/damage tile (stops at the edge).
+			Focus.MoveSafely((Vector2)direction * Focus.approachSpeed * Time.deltaTime);
 		}
 	};
 };

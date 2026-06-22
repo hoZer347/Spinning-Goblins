@@ -17,7 +17,7 @@ public class St_Pl_Idle : St_Pl_Base
     public override void OnUpdate()
     {
         // Resting with our center over a pit drops us in.
-        if (Focus.IsCenterOverPit())
+        if (Focus.IsFullyInsidePit())
         {
             SetState<St_Pl_Falling>();
             return;

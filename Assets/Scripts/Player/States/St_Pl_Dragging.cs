@@ -35,40 +35,56 @@ public class St_Pl_Dragging : St_Pl_Base
         if (dragVec.magnitude > Focus.MaxDragDistance)
             dragVec = dragVec.normalized * Focus.MaxDragDistance;
 
-        // Clamp so player can't be dragged off screen
-        Vector2 targetPos = _origin + dragVec;
+        // Launch power comes from the FULL pull, so compression and the wall / screen clamping
+        // below never weaken the shot — same output velocity however far the body stretches.
+        Focus.LaunchForce = -dragVec * Focus.LaunchForceMultiplier;
+
+        // Compress the visible stretch, then stop it short of any wall it would poke into.
+        Vector2 offset = ClampOutOfWalls(_origin, dragVec * Focus.StretchCompression);
+
+        // Keep the body on screen.
+        Vector2 targetPos = _origin + offset;
         Vector2 extents = Focus.Collider != null ? (Vector2)Focus.Collider.bounds.extents : Vector2.one * 0.5f;
         Vector2 sMin = Camera.main.ViewportToWorldPoint(new Vector3(0f, 0f, 0f));
         Vector2 sMax = Camera.main.ViewportToWorldPoint(new Vector3(1f, 1f, 0f));
         targetPos.x = Mathf.Clamp(targetPos.x, sMin.x + extents.x, sMax.x - extents.x);
         targetPos.y = Mathf.Clamp(targetPos.y, sMin.y + extents.y, sMax.y - extents.y);
-        dragVec = targetPos - _origin;
 
         Focus.transform.position = new Vector3(targetPos.x, targetPos.y, Focus.transform.position.z);
-        Focus.LaunchForce = -dragVec * Focus.LaunchForceMultiplier;
 
-        // Line from pulled-back player through origin and out the same distance in launch direction
+        // Line from the pulled-back body, through origin, out along the launch direction.
         if (Focus.DragLine != null)
         {
             Focus.DragLine.SetPosition(0, Focus.transform.position);
             Focus.DragLine.SetPosition(1, (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z));
         };
 
-		//if (_wooshSFXDelay.Tick())
-		//{
-		//	Focus.audioSource.PlayOneShot(Focus.spinWoosh);
-		//	_wooshSFXDelay.Reset(0.5f);
-		//};
-
         if (Mouse.current.leftButton.wasReleasedThisFrame)
             SetState<St_Pl_Flying>();
     }
 
+    // Stops the stretch offset short of any obstacle it would enter, keeping its direction so the
+    // launch aim (and resulting velocity) is unchanged.
+    private Vector2 ClampOutOfWalls(Vector2 origin, Vector2 offset)
+    {
+        if (Focus.Collider == null || offset == Vector2.zero)
+            return offset;
+
+        float radius = Focus.Collider.bounds.extents.x;
+        RaycastHit2D hit = Physics2D.CircleCast(
+            origin, radius, offset.normalized, offset.magnitude, Focus.ObstacleLayer);
+
+        return hit.collider != null
+            ? offset.normalized * hit.distance
+            : offset;
+    }
+
     public override void OnExit(State nextState)
     {
-        Focus.transform.position = (Vector3)_origin + new Vector3(0, 0, Focus.transform.position.z);
+        // Launch from where the body actually is (the stretched position) instead of snapping
+        // back to the drag origin — the flight begins from where the player starts moving.
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
 
-		Focus.audioSource.PlayOneShot(Focus.spinWoosh);
-	}
+        Focus.audioSource.PlayOneShot(Focus.spinWoosh);
+    }
 }

@@ -19,13 +19,7 @@ namespace hoZer
 
 		public override void OnUpdate()
 		{
-			if (Focus.IsCenterOverPit())
-			{
-				Focus.gameObject.SetActive(false);
-				gameObject.SetActive(false);
-				return;
-			};
-
+			// Falling into a pit is handled centrally by EnemyController (IsFullyInsidePit).
 			if (Focus.rigidbody.linearVelocity.magnitude < RestThreshold)
 				SetState<St_En1_Approach>();
 		}

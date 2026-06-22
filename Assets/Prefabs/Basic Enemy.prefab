@@ -65,8 +65,11 @@ MonoBehaviour:
   wanderTimeMax: 3
   hitstunDuration: 0.3
   stopFriction: 5
+  pauseDuration: 1
   approachSpeed: 5
   fallingDuration: 1
+  audioSource: {fileID: 0}
+  hitstunSound: {fileID: 0}
   references:
     version: 2
     RefIds:
