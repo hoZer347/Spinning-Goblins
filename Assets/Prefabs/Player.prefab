@@ -60,6 +60,7 @@ MonoBehaviour:
   Sprite: {fileID: 7443837218076446409}
   LaunchForceMultiplier: 5
   MaxDragDistance: 5
+  StretchCompression: 0.5
   LinearDamping: 0.8
   StickyDamping: 8
   StickyThreshold: 3
@@ -91,10 +92,17 @@ MonoBehaviour:
   hurtFlashTime: 0.1
   hitStunTime: 1
   audioSource: {fileID: 3037478790147917427}
-  hit: {fileID: 0}
+  hit: {fileID: 8300000, guid: 489a27779fabdf04585bf902c883f1da, type: 3}
   stretch: {fileID: 8300000, guid: 4cb2e50288356ec44a9b230331115c83, type: 3}
   spinWoosh: {fileID: 8300000, guid: 26b740c1f935e274f8c042e10d2a4955, type: 3}
   gobHurt: {fileID: 8300000, guid: 20dbce8c77b7d484c8b090fc2705beed, type: 3}
+  spin: {fileID: 8300000, guid: 56c5831405658674f85bbb2a93e7fffd, type: 3}
+  spinVolume: 0.5
+  spinIntervalMax: 0.4
+  spinIntervalMin: 0.1
+  spinPitchMin: 0.5
+  spinPitchMax: 2
+  spinFlightHold: 0.3
   references:
     version: 2
     RefIds:

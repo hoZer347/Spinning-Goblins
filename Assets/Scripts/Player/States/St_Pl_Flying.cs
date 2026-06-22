@@ -29,6 +29,9 @@ public class St_Pl_Flying : St_Pl_Base
             return;
         }
 
+        // Spin stays high while we're moving fast and only drops off near the end of the flight.
+        Focus.SpinFlightTick(Focus.Rigidbody.linearVelocity.magnitude);
+
         // Otherwise settle into Idle once we've slowed down.
         _elapsed += Time.deltaTime;
         if (_elapsed >= MinFlightTime && Focus.Rigidbody.linearVelocity.magnitude < RestThreshold)

@@ -22,6 +22,9 @@ namespace hoZer
 
 		public override void OnUpdate()
 		{
+			// Ease the spin down with the braking speed (Flying held it constant until now).
+			Focus.SpinTick(Focus.Rigidbody.linearVelocity.magnitude);
+
 			if (Focus.IsFullyInsidePit())
 			{
 				SetState<St_Pl_Falling>();
