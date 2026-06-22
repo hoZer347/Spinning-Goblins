@@ -19,11 +19,37 @@ public abstract class St_Pl_Base : State<PlayerController>
 		// calling the bare SetState here would push an EnemyController state onto the player's
 		// own machine, where Focus (stateMachine as EnemyController) is null.
 		EnemyController enemyController = other.GetComponent<EnemyController>();
-		if (enemyController != null
-			&& Focus.Current is St_Pl_Flying)
+		if (enemyController != null)
 		{
-			Focus.ShakeCamera();
-			enemyController.SetState<St_En1_Hitstun>();
+			if (Focus.Current is St_Pl_Flying)
+			{
+				Focus.ShakeCamera();
+				enemyController.SetState<St_En1_Hitstun>();
+			};
+
+			if (Focus.Current is St_Pl_Stopping
+				|| Focus.Current is St_Pl_Dragging
+				|| Focus.Current is St_Pl_Idle)
+			{
+				Focus.ShakeCamera();
+				Focus.audioSource.PlayOneShot(Focus.gobHurt, .5f);
+				
+				Vector3 direction =
+					(enemyController.transform.position
+					 - Focus.transform.position).normalized;
+
+				// A bodyType change inside a collision callback is DEFERRED until after the
+				// physics step, so the body is still Kinematic this frame and AddForce gets
+				// dropped (forces are ignored on Kinematic bodies). Setting linearVelocity IS
+				// honoured on a Kinematic body and is preserved when it flips to Dynamic — so
+				// the knockback actually lands.
+				Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
+				Focus.Rigidbody.linearVelocity = -direction * Focus.HurtBounceForce;
+
+				// Pause the enemy briefly so it stops shoving the player while we recover.
+				enemyController.SetState<St_En1_Pause>();
+				SetState<St_Pl_Hitstun>();
+			};
 		};
 
 		if (Focus.IsDamageLayer(other.gameObject.layer))

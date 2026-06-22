@@ -48,11 +48,17 @@ public class PlayerController : StateMachine<PlayerController>
 	[HideInInspector] public Vector2 LaunchForce;
 	[HideInInspector] public Vector2 DragClickPosition;
 
+	[Header("Hurt Settings")]
+	[SerializeField] public float HurtBounceForce = 20f;
+	[SerializeField] public float hurtFlashTime = .1f;
+	[SerializeField] public float hitStunTime = 1f;
+
 	[Header("Sounds")]
 	[SerializeField] public AudioSource audioSource;
 	[SerializeField] public AudioClip hit;
 	[SerializeField] public AudioClip stretch;
 	[SerializeField] public AudioClip spinWoosh;
+	[SerializeField] public AudioClip gobHurt;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -77,7 +83,10 @@ public class PlayerController : StateMachine<PlayerController>
 		// detected purely by center-point queries, so we exclude the layers from physical
 		// collision. Done in code so it survives scene reserialization.
 		if (Collider != null)
-			Collider.excludeLayers = Collider.excludeLayers.value | PitsLayer.value | ExitLayer.value;
+			Collider.excludeLayers =
+				Collider.excludeLayers.value
+				| PitsLayer.value
+				| ExitLayer.value;
 
 		if (Sprite == null) Sprite = GetComponentInChildren<SpriteRenderer>();
 		if (DeathPanel != null) DeathPanel.SetActive(false);

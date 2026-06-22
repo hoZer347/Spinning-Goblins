@@ -29,6 +29,7 @@ namespace hoZer
 		[Header("Hitstun Settings")]
 		[SerializeField] public float				hitstunDuration		= 0.5f;
 		[SerializeField] public float				stopFriction		= 5f;
+		[SerializeField] public float				pauseDuration		= 1.0f;
 
 		[Header("Approach Settings")]
 		[SerializeField] public float				approachSpeed		= 40f;
@@ -37,7 +38,8 @@ namespace hoZer
 		[SerializeField] public float				fallingDuration		= 1.0f;
 
 		[Header("Audio Settings")]
-		[SerializeField] public AudioSource audioSource;
+		[SerializeField] public AudioSource			audioSource;
+		[SerializeField] public AudioClip			hitstunSound;
 
 		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
 		const float WallCastSkin = 0.05f;

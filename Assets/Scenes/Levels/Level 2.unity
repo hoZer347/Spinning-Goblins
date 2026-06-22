@@ -535,14 +535,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 8343981640199960309, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: MaxDragDistance
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8343981640199960309, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: LaunchForceMultiplier
-      value: 5
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -17432,7 +17424,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
       propertyPath: detectionRadius
-      value: 0
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7417291820908702755, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
       propertyPath: m_Name

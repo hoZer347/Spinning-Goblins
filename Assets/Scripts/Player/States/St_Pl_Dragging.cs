@@ -24,7 +24,7 @@ public class St_Pl_Dragging : St_Pl_Base
             Focus.DragLine.endWidth = 0.01f;
         };
 
-		Focus.audioSource.PlayOneShot(Focus.stretch);
+		Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
 	}
 
     public override void OnUpdate()
@@ -52,7 +52,7 @@ public class St_Pl_Dragging : St_Pl_Base
         {
             Focus.DragLine.SetPosition(0, Focus.transform.position);
             Focus.DragLine.SetPosition(1, (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z));
-        }
+        };
 
 		//if (_wooshSFXDelay.Tick())
 		//{

@@ -639,34 +639,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_Reverb
-      value: 53
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_RoomHF
-      value: -454
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_DecayTime
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_Reflections
-      value: -1646
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_ReverbDelay
-      value: 0.003
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_ReverbPreset
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5350115263949615158, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: m_ReflectionsDelay
-      value: 0.002
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
