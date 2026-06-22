@@ -48,8 +48,11 @@ public class PlayerController : StateMachine<PlayerController>
 	[HideInInspector] public Vector2 LaunchForce;
 	[HideInInspector] public Vector2 DragClickPosition;
 
-	[Header("Scene Management")]
-	[SerializeField] public SceneReference nextScene;
+	[Header("Sounds")]
+	[SerializeField] public AudioSource audioSource;
+	[SerializeField] public AudioClip hit;
+	[SerializeField] public AudioClip stretch;
+	[SerializeField] public AudioClip spinWoosh;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -78,6 +81,7 @@ public class PlayerController : StateMachine<PlayerController>
 
 		if (Sprite == null) Sprite = GetComponentInChildren<SpriteRenderer>();
 		if (DeathPanel != null) DeathPanel.SetActive(false);
+		if (audioSource == null) audioSource = GetComponent<AudioSource>();
 
 		SetState<St_Pl_Idle>();
 	}

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 
@@ -13,7 +14,7 @@ namespace hoZer
 		[SerializeField] new public Rigidbody2D		rigidbody;
 		[SerializeField] new public Collider2D		collider;
 		[SerializeField] public SpriteRenderer		spriteRenderer;
-		[SerializeField] public PlayerController	playerController;
+		[HideInInspector] public PlayerController	playerController;
 
 		[Header("Wander Settings")]
 		[SerializeField] public float				detectionRadius		= 100f;
@@ -34,6 +35,9 @@ namespace hoZer
 
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
+
+		[Header("Audio Settings")]
+		[SerializeField] public AudioSource audioSource;
 
 		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
 		const float WallCastSkin = 0.05f;
@@ -73,6 +77,7 @@ namespace hoZer
 			if (collider == null)         collider         = GetComponent<Collider2D>();
 			if (spriteRenderer == null)   spriteRenderer   = GetComponent<SpriteRenderer>();
 			if (playerController == null) playerController = FindAnyObjectByType<PlayerController>();
+			if (audioSource == null)	  audioSource = GetComponent<AudioSource>();
 
 			if (rigidbody != null)
 			{
