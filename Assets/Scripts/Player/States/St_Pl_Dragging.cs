@@ -59,9 +59,11 @@ public class St_Pl_Dragging : St_Pl_Base
         // Line from the pulled-back body, through origin, out along the launch direction.
         if (Focus.DragLine != null)
         {
+            Focus.DragLine.positionCount = 2;
             Focus.DragLine.SetPosition(0, Focus.transform.position);
             Focus.DragLine.SetPosition(1, (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z));
-        };
+        }
+        ;
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
             SetState<St_Pl_Flying>();
@@ -89,8 +91,6 @@ public class St_Pl_Dragging : St_Pl_Base
         // back to the drag origin — the flight begins from where the player starts moving.
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
 
-        Focus.audioSource.PlayOneShot(Focus.spinWoosh);
-    }
         Focus.audioSource.PlayOneShot(Focus.spinWoosh);
     }
 }
