@@ -51,8 +51,9 @@ namespace hoZer
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
 
-<<<<<<< Updated upstream
-		[Header("Health")]
+ 		[Header("Health")]
+		[Tooltip("How much of the enemy budget this prefab costs when spawned.")]
+		[SerializeField] public float				spawnCost			= 1f;
 		[SerializeField] public int					maxHealth			= 3;
 		[SerializeField] public float				damageCooldown		= 0.25f;
 		[SerializeField] public float				healthBarHeight		= 0.6f;
@@ -60,14 +61,6 @@ namespace hoZer
 		int				health;
 		float			damageReadyAt;
 		EnemyHealthBar	healthBar;
-=======
-		[Header("Spawning")]
-		[Tooltip("How much of the enemy budget this prefab costs when spawned by LevelSpawner.")]
-		[SerializeField] public float				spawnCost			= 1f;
-		[Tooltip("Max hits before this enemy dies. Each hitstun = one hit.")]
-		[SerializeField] public int					maxHealth			= 3;
-		[HideInInspector] public int				currentHealth;
->>>>>>> Stashed changes
 
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
@@ -153,8 +146,6 @@ namespace hoZer
 			if (spriteRenderer == null)   spriteRenderer   = GetComponent<SpriteRenderer>();
 			if (playerController == null) playerController = FindAnyObjectByType<PlayerController>();
 			if (audioSource == null)	  audioSource = GetComponent<AudioSource>();
-
-			currentHealth = maxHealth;
 
 			if (rigidbody != null)
 			{

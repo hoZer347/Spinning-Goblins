@@ -20,8 +20,6 @@ namespace hoZer
             base.OnEnter(lastState);
             duration.Reset(Focus.hitstunDuration);
 
-            Focus.currentHealth--;
-
             Focus.rigidbody.bodyType       = RigidbodyType2D.Dynamic;
             Focus.rigidbody.sharedMaterial = _bounceMat;
             Focus.rigidbody.linearDamping  = 1f;
@@ -41,12 +39,7 @@ namespace hoZer
             base.OnUpdate();
 
             if (duration.Tick())
-            {
-                if (Focus.currentHealth <= 0)
-                    SetState<St_En1_Die>();
-                else
-                    SetState<St_En1_Stopping>();
-            }
+                SetState<St_En1_Stopping>();
         }
     };
 };

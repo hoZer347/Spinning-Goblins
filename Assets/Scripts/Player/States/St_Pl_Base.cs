@@ -95,7 +95,6 @@ public abstract class St_Pl_Base : State<PlayerController>
 
         Focus.audioSource.PlayOneShot(Focus.hit, .3f);
         Focus.ShakeCamera();
-<<<<<<< Updated upstream
 
         // Spend a dot if the player uses a health bar; an empty bar means death.
         if (Focus.SpendHealth())
@@ -115,14 +114,5 @@ public abstract class St_Pl_Base : State<PlayerController>
         Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
         Focus.Rigidbody.linearVelocity = dir * Focus.SpikeBounceSpeed;
         SetState<St_Pl_Hitstun>();
-=======
-        Focus.CurrentHealth--;
-        Focus.RespawnAtStart();
-
-        if (Focus.CurrentHealth <= 0)
-            SetState<St_Pl_Dead>();
-        else
-            SetState<St_Pl_IFrames>();
->>>>>>> Stashed changes
     }
 }

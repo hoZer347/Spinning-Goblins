@@ -67,7 +67,6 @@ public class PlayerController : StateMachine<PlayerController>
 	[Header("Health (optional)")]
 	[Tooltip("Show a dot health bar and let the player die. Off = unkillable (hitstun only, as before).")]
 	[SerializeField] public bool UseHealthBar = false;
-	[SerializeField] public int MaxHealth = 3;
 	[SerializeField] public float HealthBarHeight = 0.7f;
 
 	int _health;
