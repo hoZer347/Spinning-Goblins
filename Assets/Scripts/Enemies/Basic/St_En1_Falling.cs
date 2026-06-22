@@ -21,6 +21,8 @@ namespace hoZer
 			timeFalling.Reset(Focus.fallingDuration);
 
 			Focus.collider.enabled = false;
+
+			if (Focus.audioSource != null) Focus.audioSource.PlayOneShot(Focus.pitFall, 2f);
 		}
 
 		public override void OnUpdate()

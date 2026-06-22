@@ -97,6 +97,7 @@ MonoBehaviour:
   spinWoosh: {fileID: 8300000, guid: 26b740c1f935e274f8c042e10d2a4955, type: 3}
   gobHurt: {fileID: 8300000, guid: 20dbce8c77b7d484c8b090fc2705beed, type: 3}
   spin: {fileID: 8300000, guid: 56c5831405658674f85bbb2a93e7fffd, type: 3}
+  pitFall: {fileID: 8300000, guid: 5ea82601deede1144bc00282509b02cd, type: 3}
   spinVolume: 0.5
   spinIntervalMax: 0.4
   spinIntervalMin: 0.1
@@ -517,7 +518,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 193
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3788476935322476542, guid: a90f38c8ce08a514da17a6d1976193cc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -543,6 +544,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteAnimator
   DragMaxStretch: 0.5
   SpinRate: 60
+  SpinDecelRate: 8
   FlightStretch: 0.4
   SquashAmount: 0.4
   SquashDuration: 0.1

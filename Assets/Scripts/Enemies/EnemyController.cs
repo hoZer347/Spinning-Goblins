@@ -40,6 +40,7 @@ namespace hoZer
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
 		[SerializeField] public AudioClip			hitstunSound;
+		[SerializeField] public AudioClip			pitFall;
 
 		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
 		const float WallCastSkin = 0.05f;
