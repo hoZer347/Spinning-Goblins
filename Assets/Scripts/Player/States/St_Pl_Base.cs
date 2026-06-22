@@ -25,6 +25,7 @@ public abstract class St_Pl_Base : State<PlayerController>
 			{
 				Focus.ShakeCamera();
 				enemyController.SetState<St_En1_Hitstun>();
+				Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 			};
 
 			if (Focus.Current is St_Pl_Stopping
@@ -32,8 +33,9 @@ public abstract class St_Pl_Base : State<PlayerController>
 				|| Focus.Current is St_Pl_Idle)
 			{
 				Focus.ShakeCamera();
-				Focus.audioSource.PlayOneShot(Focus.gobHurt, .5f);
-				
+				Focus.audioSource.PlayOneShot(Focus.gobHurt, .2f);
+				Focus.audioSource.PlayOneShot(Focus.hit, .3f);
+
 				Vector3 direction =
 					(enemyController.transform.position
 					 - Focus.transform.position).normalized;
@@ -52,6 +54,10 @@ public abstract class St_Pl_Base : State<PlayerController>
 			};
 		};
 
+		// Impact sound when bouncing off a wall mid-flight.
+		if (Focus.Current is St_Pl_Flying && Focus.IsObstacleLayer(other.gameObject.layer))
+			Focus.audioSource.PlayOneShot(Focus.hit, .3f);
+
 		if (Focus.IsDamageLayer(other.gameObject.layer))
             OnDamage();
     }
@@ -64,6 +70,9 @@ public abstract class St_Pl_Base : State<PlayerController>
     public virtual void OnDamage()
     {
         if (Focus.IsInvulnerable) return;
+
+        // Spikes / damage impact.
+        Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 
         // TODO: subtract from a health pool here, only respawn / go to St_Pl_Dead when depleted.
         Focus.ShakeCamera();

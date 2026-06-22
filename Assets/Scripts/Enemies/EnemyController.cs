@@ -50,21 +50,39 @@ namespace hoZer
 				GameObject.FindObjectsByType<EnemyController>(
 					FindObjectsSortMode.None);
 
-			if (enemyController.Length == 0)
+			if (Application.isPlaying && enemyController.Length == 0)
 				SceneManager.LoadScene(FindAnyObjectByType<CutsceneManager>()
 					.NextScene);
 		}
 
 		private void OnCollisionEnter2D(Collision2D collision)
 		{
-			// gameObject.layer is a layer INDEX (e.g. 8); LayerMask.GetMask returns a BITMASK
-			// (e.g. 256). Comparing them is never true — use NameToLayer to compare indices.
+			if (!(Current is St_En1_Hitstun)) return;
+
+			// gameObject.layer is a layer INDEX; LayerMask.NameToLayer compares indices.
+			// Pits are handled by IsFullyInsidePit in OnPhysics, so only Damage / walls here.
 			int layer = collision.gameObject.layer;
 
-			// Pits are handled by the IsFullyInsidePit check in OnPhysics (drop in only once the
-			// whole body is inside), so only Damage walls are reacted to on contact here.
-			if (Current is St_En1_Hitstun && layer == LayerMask.NameToLayer("Damage"))
-				SetState<St_En1_Die>();
+			if (layer == LayerMask.NameToLayer("Damage"))
+				DieFromHazard();             // hit spikes mid-hitstun
+			else if (layer == LayerMask.NameToLayer("Obstacle"))
+				PlayHit();                   // bounced off a wall mid-hitstun
+		}
+
+		// Spike/hazard death: play the impact, then die. The hit is its own line (not in
+		// St_En1_Die) because Die can be entered for other reasons that shouldn't sound a hit.
+		void DieFromHazard()
+		{
+			PlayHit();
+			SetState<St_En1_Die>();
+		}
+
+		// Plays the shared hit sound through the PLAYER's audio source, so it still sounds even
+		// when this enemy is being destroyed (which would kill its own AudioSource mid-clip).
+		public void PlayHit()
+		{
+			if (playerController != null && playerController.audioSource != null && playerController.hit != null)
+				playerController.audioSource.PlayOneShot(playerController.hit, 0.3f);
 		}
 
 		protected override void OnStart()
@@ -106,7 +124,7 @@ namespace hoZer
 			// Pre-empt the Damage-wall bounce during the knockback slide (Hitstun / Stopping are
 			// the Dynamic phase; Wander/Approach move via transform and carry no velocity here).
 			if ((Current is St_En1_Hitstun || Current is St_En1_Stopping) && DamageWallAhead())
-				SetState<St_En1_Die>();
+				DieFromHazard();
 		}
 
 		// True if a Damage wall is within this step's travel, so we react before bouncing off it.

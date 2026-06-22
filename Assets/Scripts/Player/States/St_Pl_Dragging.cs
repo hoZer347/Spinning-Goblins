@@ -28,8 +28,10 @@ public class St_Pl_Dragging : St_Pl_Base
         }
         ;
 
-        Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
-    }
+		Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
+
+		Focus.ResetSpin();
+	}
 
     public override void OnUpdate()
     {
@@ -42,6 +44,9 @@ public class St_Pl_Dragging : St_Pl_Base
         // Launch power comes from the FULL pull, so compression and the wall / screen clamping
         // below never weaken the shot — same output velocity however far the body stretches.
         Focus.LaunchForce = -dragVec * Focus.LaunchForceMultiplier;
+
+        // Spin rate ramps with the forward push it'll get (the launch power), not the stretch.
+        Focus.SpinTick(Focus.LaunchForce.magnitude);
 
         // Compress the visible stretch, then stop it short of any wall it would poke into.
         Vector2 offset = ClampOutOfWalls(_origin, dragVec * Focus.StretchCompression);

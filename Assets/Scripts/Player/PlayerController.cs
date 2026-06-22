@@ -64,6 +64,22 @@ public class PlayerController : StateMachine<PlayerController>
 	[SerializeField] public AudioClip stretch;
 	[SerializeField] public AudioClip spinWoosh;
 	[SerializeField] public AudioClip gobHurt;
+	[SerializeField] public AudioClip spin;
+	[SerializeField] public AudioClip pitFall;
+
+	[Header("Spin Audio")]
+	[SerializeField] float spinVolume = 0.5f;
+	[Tooltip("Seconds between spin sounds at lowest intensity (slowest spin rate).")]
+	[SerializeField] float spinIntervalMax = 0.4f;
+	[Tooltip("Seconds between spin sounds at highest intensity (fastest spin rate).")]
+	[SerializeField] float spinIntervalMin = 0.05f;
+	[SerializeField] float spinPitchMin = 0.8f;
+	[SerializeField] float spinPitchMax = 2.5f;
+	[Tooltip("Flight speed (as a fraction of launch power) at/above which the spin stays at full; below it eases off near the end of the flight.")]
+	[Range(0.05f, 1f)] [SerializeField] float spinFlightHold = 0.3f;
+
+	float _spinTimer;
+	AudioSource spinSource;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -101,6 +117,11 @@ public class PlayerController : StateMachine<PlayerController>
 		if (DeathPanel != null) DeathPanel.SetActive(false);
 		if (audioSource == null) audioSource = GetComponent<AudioSource>();
 
+		// Dedicated source for the spin one-shots so their per-spin pitch doesn't affect the
+		// other SFX played through audioSource.
+		spinSource = gameObject.AddComponent<AudioSource>();
+		spinSource.playOnAwake = false;
+
 		SetState<St_Pl_Idle>();
 	}
 
@@ -131,6 +152,8 @@ public class PlayerController : StateMachine<PlayerController>
 
 	public bool IsDamageLayer(int layer) => (DamageLayer.value & (1 << layer)) != 0;
 
+	public bool IsObstacleLayer(int layer) => (ObstacleLayer.value & (1 << layer)) != 0;
+
 	protected override void OnUpdate()
 	{
 		if (!IsInvulnerable && IsCenterOverExit())
@@ -146,6 +169,47 @@ public class PlayerController : StateMachine<PlayerController>
 		CameraController camera = FindAnyObjectByType<CameraController>();
 		if (camera != null)
 			camera.SetState<St_Cm_Shake>();
+	}
+
+	// --- Spin audio ---------------------------------------------------------------------
+
+	/// <summary>Resets the spin cadence so the next SpinTick fires promptly.</summary>
+	public void ResetSpin() => _spinTimer = 0f;
+
+	/// <summary>
+	/// Plays the spin whoosh on a repeating interval whose RATE rises with intensity — launch
+	/// power while dragging, flight speed while flying. Higher intensity = more spins per second.
+	/// </summary>
+	/// <summary>Launch power at full stretch — also the rough top flight speed. Spin intensity is
+	/// normalised against this so pitch / rate peak exactly at the stretch limit.</summary>
+	public float MaxLaunchPower => MaxDragDistance * LaunchForceMultiplier;
+
+	/// <summary>Drag / braking spin: linear with intensity, peaking at full launch power.</summary>
+	public void SpinTick(float intensity)
+		=> Spin(MaxLaunchPower > 0f ? Mathf.Clamp01(intensity / MaxLaunchPower) : 0f);
+
+	/// <summary>Flight spin: stays at full while moving fast, easing off only once the speed drops
+	/// below spinFlightHold of the launch power — high at the start, dropping near the end.</summary>
+	public void SpinFlightTick(float speed)
+	{
+		float reference = MaxLaunchPower * spinFlightHold;
+		Spin(reference > 0f ? Mathf.Clamp01(speed / reference) : 0f);
+	}
+
+	// Paces and plays one spin whoosh from an already-normalised intensity (0..1).
+	void Spin(float t)
+	{
+		_spinTimer -= Time.deltaTime;
+		if (_spinTimer > 0f) return;
+
+		// Both the pitch of each whoosh and the gap until the next rise with intensity.
+		if (spin != null && spinSource != null)
+		{
+			spinSource.pitch = Mathf.Lerp(spinPitchMin, spinPitchMax, t);
+			spinSource.PlayOneShot(spin, spinVolume);
+		}
+
+		_spinTimer = Mathf.Lerp(spinIntervalMax, spinIntervalMin, t);
 	}
 
 	/// <summary>Resets the player to its starting position, scale, rotation and a clean velocity.</summary>
