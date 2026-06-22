@@ -23,9 +23,19 @@ public abstract class St_Pl_Base : State<PlayerController>
 		{
 			if (Focus.Current is St_Pl_Flying)
 			{
-				Focus.ShakeCamera();
-				enemyController.SetState<St_En1_Hitstun>();
-				Focus.audioSource.PlayOneShot(Focus.hit, .3f);
+				// A flinging enemy's lunge beats the player's flight: the player gets hurt instead
+				// of the enemy. Any other time, the flying player damages the enemy as usual.
+				if (enemyController.Current is St_En1_Fling)
+				{
+					Vector2 c = Focus.Collider.bounds.center;
+					OnDamage(c - (Vector2)enemyController.transform.position);
+				}
+				else
+				{
+					Focus.ShakeCamera();
+					enemyController.TakeDamage();   // spend a dot; hitstun on survive, die when depleted
+					Focus.audioSource.PlayOneShot(Focus.hit, .3f);
+				}
 			};
 
 			if (Focus.Current is St_Pl_Stopping
@@ -50,6 +60,13 @@ public abstract class St_Pl_Base : State<PlayerController>
 
 				// Pause the enemy briefly so it stops shoving the player while we recover.
 				enemyController.SetState<St_En1_Pause>();
+
+				// Spend a dot if the player uses a health bar; an empty bar means death.
+				if (Focus.SpendHealth())
+				{
+					SetState<St_Pl_OnDeath>();
+					return;
+				}
 				SetState<St_Pl_Hitstun>();
 			};
 		};
@@ -59,24 +76,44 @@ public abstract class St_Pl_Base : State<PlayerController>
 			Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 
 		if (Focus.IsDamageLayer(other.gameObject.layer))
-            OnDamage();
+		{
+			// Knock the player straight away from the spike surface it touched.
+			Vector2 center = Focus.Collider.bounds.center;
+			OnDamage(center - (Vector2)other.ClosestPoint(center));
+		}
     }
 
     /// <summary>
-    /// Take a hit: shake the camera, respawn at the start, then enter i-frames — unless the
-    /// current state is already invulnerable. Also the entry point for external damage sources
-    /// via <see cref="PlayerController.TakeDamage"/>.
+    /// Take a hit from spikes / a damage source: shake, then drop into hitstun — no reset. The
+    /// player bounces off the spike (physics material) and recovers in place. Pits are handled
+    /// separately by St_Pl_Falling, which still drops in and respawns. Skipped while already
+    /// invulnerable. Also the entry point for external damage via <see cref="PlayerController.TakeDamage"/>.
     /// </summary>
-    public virtual void OnDamage()
+    public virtual void OnDamage(Vector2 knockbackDir = default)
     {
         if (Focus.IsInvulnerable) return;
 
         // Spikes / damage impact.
         Focus.audioSource.PlayOneShot(Focus.hit, .3f);
-
-        // TODO: subtract from a health pool here, only respawn / go to St_Pl_Dead when depleted.
         Focus.ShakeCamera();
-        Focus.RespawnAtStart();
-        SetState<St_Pl_IFrames>();
+
+        // Spend a dot if the player uses a health bar; an empty bar means death.
+        if (Focus.SpendHealth())
+        {
+            SetState<St_Pl_OnDeath>();
+            return;
+        }
+
+        // Launch the player off at a fixed speed (no reset). Prefer the away-from-spike direction
+        // the caller computed; fall back to the current heading for directionless hits.
+        Vector2 dir = knockbackDir.sqrMagnitude > 0.0001f
+            ? knockbackDir.normalized
+            : Focus.Rigidbody.linearVelocity.normalized;
+
+        // Stay Dynamic so the launch carries the player away through the stun, instead of
+        // teleporting back to spawn the way the old reset did.
+        Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
+        Focus.Rigidbody.linearVelocity = dir * Focus.SpikeBounceSpeed;
+        SetState<St_Pl_Hitstun>();
     }
 }

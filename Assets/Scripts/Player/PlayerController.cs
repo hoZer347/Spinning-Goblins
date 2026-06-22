@@ -57,6 +57,17 @@ public class PlayerController : StateMachine<PlayerController>
 	[SerializeField] public float HurtBounceForce = 20f;
 	[SerializeField] public float hurtFlashTime = .1f;
 	[SerializeField] public float hitStunTime = 1f;
+	[Tooltip("Spike knockback: the player is launched straight away from the spike at this fixed speed.")]
+	[SerializeField] public float SpikeBounceSpeed = 25f;
+
+	[Header("Health (optional)")]
+	[Tooltip("Show a dot health bar and let the player die. Off = unkillable (hitstun only, as before).")]
+	[SerializeField] public bool UseHealthBar = false;
+	[SerializeField] public int MaxHealth = 3;
+	[SerializeField] public float HealthBarHeight = 0.7f;
+
+	int _health;
+	EnemyHealthBar _healthBar;
 
 	[Header("Sounds")]
 	[SerializeField] public AudioSource audioSource;
@@ -83,7 +94,8 @@ public class PlayerController : StateMachine<PlayerController>
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
-		Current is St_Pl_IFrames || Current is St_Pl_Falling || Current is St_Pl_Dead;
+		Current is St_Pl_IFrames || Current is St_Pl_Falling || Current is St_Pl_Dead
+		|| Current is St_Pl_Hitstun || Current is St_Pl_OnDeath;
 
 	protected override void OnStart()
 	{
@@ -121,6 +133,12 @@ public class PlayerController : StateMachine<PlayerController>
 		// other SFX played through audioSource.
 		spinSource = gameObject.AddComponent<AudioSource>();
 		spinSource.playOnAwake = false;
+
+		if (UseHealthBar)
+		{
+			_health = MaxHealth;
+			_healthBar = EnemyHealthBar.Create(transform, MaxHealth, HealthBarHeight);
+		}
 
 		SetState<St_Pl_Idle>();
 	}
@@ -231,6 +249,20 @@ public class PlayerController : StateMachine<PlayerController>
 	/// <summary>The active state narrowed to the player base. Every player state derives from
 	/// St_Pl_Base, so this is the single place the machine's generic State gets cast.</summary>
 	private St_Pl_Base ActiveState => Current as St_Pl_Base;
+
+	/// <summary>
+	/// Spends one health dot if the optional bar is enabled. Returns true when that empties the bar
+	/// (the caller should send the player to St_Pl_OnDeath). With the bar disabled the player is
+	/// unkillable and this is a no-op returning false.
+	/// </summary>
+	public bool SpendHealth()
+	{
+		if (!UseHealthBar) return false;
+
+		_health = Mathf.Max(0, _health - 1);
+		if (_healthBar != null) _healthBar.SetHealth(_health);
+		return _health <= 0;
+	}
 
 	/// <summary>
 	/// External damage entry point (e.g. enemies). Routed to the current state so the

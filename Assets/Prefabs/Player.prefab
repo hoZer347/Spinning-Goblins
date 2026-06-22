@@ -91,6 +91,7 @@ MonoBehaviour:
   HurtBounceForce: 5
   hurtFlashTime: 0.1
   hitStunTime: 1
+  SpikeBounceSpeed: 2
   audioSource: {fileID: 3037478790147917427}
   hit: {fileID: 8300000, guid: 489a27779fabdf04585bf902c883f1da, type: 3}
   stretch: {fileID: 8300000, guid: 4cb2e50288356ec44a9b230331115c83, type: 3}

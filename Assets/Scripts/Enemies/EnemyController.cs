@@ -34,8 +34,32 @@ namespace hoZer
 		[Header("Approach Settings")]
 		[SerializeField] public float				approachSpeed		= 40f;
 
+		[Header("Fling (optional)")]
+		[Tooltip("Enables the stretch-and-fling lunge. Off = plain basic enemy.")]
+		[SerializeField] public bool				canFling			= false;
+		[SerializeField] public float				flingRange			= 4.0f;
+		[SerializeField] public float				flingWindup			= 0.6f;
+		[Tooltip("Lunge speed. Keep below the player's launch power so it stays beatable.")]
+		[SerializeField] public float				flingSpeed			= 12f;
+		[Tooltip("Body stretch factor during the wind-up telegraph.")]
+		[SerializeField] public float				flingStretch		= 1.5f;
+		[Tooltip("Seconds of chasing between lunges.")]
+		[SerializeField] public float				flingCooldown		= 1.5f;
+
+		[HideInInspector] public Vector2			flingDirection;
+		[HideInInspector] public float				flingReadyAt;
+
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
+
+		[Header("Health")]
+		[SerializeField] public int					maxHealth			= 3;
+		[SerializeField] public float				damageCooldown		= 0.25f;
+		[SerializeField] public float				healthBarHeight		= 0.6f;
+
+		int				health;
+		float			damageReadyAt;
+		EnemyHealthBar	healthBar;
 
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
@@ -65,17 +89,37 @@ namespace hoZer
 			int layer = collision.gameObject.layer;
 
 			if (layer == LayerMask.NameToLayer("Damage"))
-				DieFromHazard();             // hit spikes mid-hitstun
+				HurtByHazard();              // hit spikes mid-hitstun
 			else if (layer == LayerMask.NameToLayer("Obstacle"))
 				PlayHit();                   // bounced off a wall mid-hitstun
 		}
 
-		// Spike/hazard death: play the impact, then die. The hit is its own line (not in
-		// St_En1_Die) because Die can be entered for other reasons that shouldn't sound a hit.
-		void DieFromHazard()
+		// Spike/hazard contact: play the impact and spend one health dot. Death (when depleted) is
+		// handled by TakeDamage. The hit sound is sounded here, not in St_En1_Die, because Die can
+		// be entered for other reasons that shouldn't sound a hit.
+		void HurtByHazard()
 		{
 			PlayHit();
-			SetState<St_En1_Die>();
+			TakeDamage();
+		}
+
+		/// <summary>
+		/// Spends one health dot. A short cooldown coalesces rapid repeat contacts (e.g. sliding
+		/// along spikes) into single hits. Surviving a hit re-enters hitstun; reaching zero dies.
+		/// </summary>
+		public void TakeDamage(int amount = 1)
+		{
+			if (Current is St_En1_Die || Current is St_En1_Falling) return;
+			if (Time.time < damageReadyAt) return;
+			damageReadyAt = Time.time + damageCooldown;
+
+			health = Mathf.Max(0, health - amount);
+			if (healthBar != null) healthBar.SetHealth(health);
+
+			if (health <= 0)
+				SetState<St_En1_Die>();
+			else
+				SetState<St_En1_Hitstun>();
 		}
 
 		// Plays the shared hit sound through the PLAYER's audio source, so it still sounds even
@@ -110,6 +154,9 @@ namespace hoZer
 			// fully inside before it drops in. The IsFullyInsidePit query ignores this exclusion.
 			if (collider != null)
 				collider.excludeLayers = collider.excludeLayers.value | LayerMask.GetMask("Pits");
+
+			health    = maxHealth;
+			healthBar = EnemyHealthBar.Create(transform, maxHealth, healthBarHeight);
 		}
 
 		protected override void OnPhysics()
@@ -124,8 +171,8 @@ namespace hoZer
 
 			// Pre-empt the Damage-wall bounce during the knockback slide (Hitstun / Stopping are
 			// the Dynamic phase; Wander/Approach move via transform and carry no velocity here).
-			if ((Current is St_En1_Hitstun || Current is St_En1_Stopping) && DamageWallAhead())
-				DieFromHazard();
+			if ((Current is St_En1_Hitstun || Current is St_En1_Stopping || Current is St_En1_Fling) && DamageWallAhead())
+				HurtByHazard();
 		}
 
 		// True if a Damage wall is within this step's travel, so we react before bouncing off it.

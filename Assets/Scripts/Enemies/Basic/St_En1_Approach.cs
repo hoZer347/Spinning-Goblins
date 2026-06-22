@@ -18,6 +18,15 @@ namespace hoZer
 		{
 			base.OnUpdate();
 
+			// Fling enemies wind up a lunge once they're close enough and off cooldown.
+			if (Focus.canFling
+				&& Time.time >= Focus.flingReadyAt
+				&& Vector2.Distance(Focus.transform.position, Focus.playerController.transform.position) <= Focus.flingRange)
+			{
+				SetState<St_En1_FlingWindup>();
+				return;
+			}
+
 			Vector3 direction =
 				(Focus.playerController.transform.position
 				- Focus.transform.position)

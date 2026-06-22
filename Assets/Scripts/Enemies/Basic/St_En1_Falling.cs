@@ -41,7 +41,7 @@ namespace hoZer
 				= originalPosition;
 
 			if (timeFalling.Tick())
-				GameObject.Destroy(Focus);
+				GameObject.Destroy(Focus.gameObject);
 		}
 	};
 };
