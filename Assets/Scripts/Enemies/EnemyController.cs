@@ -69,6 +69,16 @@ namespace hoZer
 		[SerializeField] public AudioClip			hitstunSound;
 		[SerializeField] public AudioClip			pitFall;
 
+		[Header("Sprites")]
+		[SerializeField] public Sprite				sprIdle;
+		[SerializeField] public Sprite				sprWalkUp;
+		[SerializeField] public Sprite				sprWalkLeft;
+		[SerializeField] public Sprite				sprWalkDown;
+		[SerializeField] public Sprite				sprWalkRight;
+		[SerializeField] public Sprite				sprSleeping;
+		[SerializeField] public Sprite				sprSpinning;
+		[SerializeField] public Sprite				sprFalling;
+
 		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
 		const float WallCastSkin = 0.05f;
 
@@ -170,6 +180,9 @@ namespace hoZer
 				// without this, kinematic-vs-static collisions are silent.
 				rigidbody.gravityScale = 0f;
 				rigidbody.useFullKinematicContacts = true;
+
+				// Stay upright — knockback bounces never spin the body (the spin is a sprite anim now).
+				rigidbody.freezeRotation = true;
 			};
 
 			// Slide over Pit tiles instead of bouncing off their solid edge, so the body can get

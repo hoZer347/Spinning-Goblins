@@ -1431,13 +1431,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 7443837218076446409, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -5920194612128632720, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
     - target: {fileID: 8343981640199960309, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
       propertyPath: UseHealthBar
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8343981640199960309, guid: 891286ad0a77ba54c9188c248485c304, type: 3}
-      propertyPath: IFrameDuration
-      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

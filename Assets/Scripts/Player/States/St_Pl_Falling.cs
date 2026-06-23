@@ -5,14 +5,12 @@ using UnityEngine;
 
 /// <summary>
 /// Entered when the player is over a Pit while resting (Idle) or being pulled (Dragging).
-/// The player shrinks and spins as if dropping into the pit, then — for now — respawns
+/// The player shrinks as if dropping into the pit, then — for now — respawns
 /// back at the start. <see cref="PlayerController.IsInvulnerable"/> covers this state.
 /// </summary>
 [Serializable]
 public class St_Pl_Falling : St_Pl_Base
 {
-    private const float SpinSpeed = 540f; // deg/sec, just for a little flourish
-
     private float _elapsed;
     private Vector3 _startScale;
 
@@ -34,7 +32,6 @@ public class St_Pl_Falling : St_Pl_Base
         float t = Focus.FallDuration > 0f ? Mathf.Clamp01(_elapsed / Focus.FallDuration) : 1f;
 
         Focus.transform.localScale = Vector3.Lerp(_startScale, Vector3.zero, t);
-        Focus.transform.Rotate(0f, 0f, SpinSpeed * Time.deltaTime);
 
         if (t >= 1f)
         {

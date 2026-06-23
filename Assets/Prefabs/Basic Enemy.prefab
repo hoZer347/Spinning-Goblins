@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3051321341369431219}
   - component: {fileID: 6770229808479700758}
   - component: {fileID: 1169152603132774089}
+  - component: {fileID: 6770229808479700759}
   m_Layer: 7
   m_Name: Basic Enemy
   m_TagString: Untagged
@@ -31,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -182.94156, y: 32.80905, z: 0}
-  m_LocalScale: {x: 6, y: 6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -83,6 +84,14 @@ MonoBehaviour:
   audioSource: {fileID: 1169152603132774089}
   hitstunSound: {fileID: 8300000, guid: 489a27779fabdf04585bf902c883f1da, type: 3}
   pitFall: {fileID: 8300000, guid: 5ea82601deede1144bc00282509b02cd, type: 3}
+  sprIdle: {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  sprWalkUp: {fileID: -5994909603457892995, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  sprWalkLeft: {fileID: -1181442305833438096, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  sprWalkDown: {fileID: 5837032168538748433, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  sprWalkRight: {fileID: -8934896484919966459, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  sprSleeping: {fileID: -6461200491186749769, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  sprSpinning: {fileID: -7815508818910395713, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  sprFalling: {fileID: 8451940769943242572, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
   references:
     version: 2
     RefIds:
@@ -153,7 +162,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.1
+  m_Radius: 0.9
 --- !u!212 &6770229808479700758
 SpriteRenderer:
   serializedVersion: 2
@@ -203,8 +212,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Sprite: {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -310,3 +319,72 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &6770229808479700759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12477f6d8a094713ae7f09ed1be3f477, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IdleFrames:
+  - {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: 4491903461036982114, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: 4307909441866256769, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: -376968529573562137, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  SleepingFrames:
+  - {fileID: -6461200491186749769, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: -2213118752696755559, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: -5846396557865032034, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: 6809358978445633766, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  WalkUpFrames:
+  - {fileID: -5994909603457892995, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: 2292696910765909006, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: -8753389792035325029, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: -1325569950911192880, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  WalkDownFrames:
+  - {fileID: 5837032168538748433, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 7150482370100517122, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 2220971137338942940, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 4372184505923092393, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  WalkLeftFrames:
+  - {fileID: -1181442305833438096, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 930245020146324491, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 4694097155720166457, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 4366560730596780196, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  WalkRightFrames:
+  - {fileID: -8934896484919966459, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 5502934751631555483, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 7014731021716794231, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 4354811732103257361, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  SpinFrames:
+  - {fileID: -7815508818910395713, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -7442555119098151632, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -2322641026566669223, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -9173906579144540985, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -5301689868106870693, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -8572748235974396269, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -3856225872613377529, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -5056825839556098863, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  FallingFrames:
+  - {fileID: 8451940769943242572, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -7715317484378048481, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -9108681546828122939, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: 6335994049876620864, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: 1907192312633416190, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -3870935832502153554, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -1547319414024498973, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -3658331243292005406, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  FramesPerSecond: 6
+  SquashAmount: 0.35
+  SquashDuration: 0.08
+  StretchAmount: 0.2
+  StretchDuration: 0.14
+  ImpactReferenceSpeed: 12
+  ImpactSpeedBoost: 1.4
+  ScaleSmoothing: 16
+  MoveEpsilon: 0.0015

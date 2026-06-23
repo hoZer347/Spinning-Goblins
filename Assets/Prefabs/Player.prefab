@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 6, y: 6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3623482448210441735}
@@ -78,7 +78,7 @@ MonoBehaviour:
   ExitLayer:
     serializedVersion: 2
     m_Bits: 0
-  IFrameDuration: 1
+  IFrameDuration: 2
   ScreenShakeDuration: 0.15
   ScreenShakeMagnitude: 0.15
   FallDuration: 0.5
@@ -92,6 +92,9 @@ MonoBehaviour:
   hurtFlashTime: 0.1
   hitStunTime: 1
   SpikeBounceSpeed: 2
+  UseHealthBar: 0
+  MaxHealth: 3
+  HealthBarHeight: 0.7
   audioSource: {fileID: 3037478790147917427}
   hit: {fileID: 8300000, guid: 489a27779fabdf04585bf902c883f1da, type: 3}
   stretch: {fileID: 8300000, guid: 4cb2e50288356ec44a9b230331115c83, type: 3}
@@ -99,12 +102,17 @@ MonoBehaviour:
   gobHurt: {fileID: 8300000, guid: 20dbce8c77b7d484c8b090fc2705beed, type: 3}
   spin: {fileID: 8300000, guid: 56c5831405658674f85bbb2a93e7fffd, type: 3}
   pitFall: {fileID: 8300000, guid: 5ea82601deede1144bc00282509b02cd, type: 3}
+  gobSlide: {fileID: 8300000, guid: eb9c1fbf7c2326c4d858820117293670, type: 3}
   spinVolume: 0.5
   spinIntervalMax: 0.4
   spinIntervalMin: 0.1
   spinPitchMin: 0.5
   spinPitchMax: 2
   spinFlightHold: 0.3
+  sprIdle: {fileID: -5920194612128632720, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
+  sprSpin: {fileID: 4256394377300631199, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  sprHitstun: {fileID: -6354748860412122355, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  sprLanding: {fileID: -6064264642226627308, guid: e1de5316e90c00c489def0c6f2f86710, type: 3}
   references:
     version: 2
     RefIds:
@@ -175,7 +183,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.1
+  m_Radius: 0.9
 --- !u!82 &3037478790147917427
 AudioSource:
   m_ObjectHideFlags: 0
@@ -521,7 +529,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 3788476935322476542, guid: a90f38c8ce08a514da17a6d1976193cc, type: 3}
+  m_Sprite: {fileID: -5920194612128632720, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -543,12 +551,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cec6fcfd70823ec4093d21d22228c5d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteAnimator
-  DragMaxStretch: 0.5
-  SpinRate: 60
-  SpinDecelRate: 8
-  FlightStretch: 0.4
-  SquashAmount: 0.4
-  SquashDuration: 0.1
-  PostStretchTime: 0.15
-  WallLookaheadDist: 0.8
-  ScaleSmoothing: 16
+  IdleFrames:
+  - {fileID: -5920194612128632720, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
+  - {fileID: -8857337163143551245, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
+  - {fileID: -4477740603838114550, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
+  - {fileID: -613801043789366247, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
+  SpinFrames:
+  - {fileID: 4256394377300631199, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: 8299370221428555724, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: -1485772086951958974, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: 844465976065644393, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: 8663800253072586694, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: -199081009234113921, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: 7329508009664236562, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  - {fileID: -3221416237134806709, guid: f5aa599db289951439a7dd9ad62d43e5, type: 3}
+  HitstunFrames:
+  - {fileID: -6354748860412122355, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  - {fileID: 864563096435679450, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  - {fileID: 2080220467359456153, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  - {fileID: 6612017927263926088, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  - {fileID: -3954179436905016481, guid: 7d2075b650c5f6a41bea3289bb20bf7a, type: 3}
+  LandingFrames:
+  - {fileID: -6064264642226627308, guid: e1de5316e90c00c489def0c6f2f86710, type: 3}
+  - {fileID: -5467875402777422024, guid: e1de5316e90c00c489def0c6f2f86710, type: 3}
+  - {fileID: 6870701426275553943, guid: e1de5316e90c00c489def0c6f2f86710, type: 3}
+  - {fileID: 1513381497660078578, guid: e1de5316e90c00c489def0c6f2f86710, type: 3}
+  FramesPerSecond: 4
+  SpinFpsMin: 2
+  SpinFpsMax: 24
+  DragStretch: 0.7
+  SquashAmount: 0.6
+  SquashDuration: 0.09
+  StretchAmount: 0.45
+  StretchDuration: 0.16
+  ImpactSpeedBoost: 1.8
+  ScaleSmoothing: 18
