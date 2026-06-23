@@ -47,6 +47,12 @@ public class GameManager : StateMachine<GameManager>
     public int ScorePerKill  = 10;
     public int ScorePerLevel = 100;
 
+    // ── Scene state ───────────────────────────────────────────────────────────────
+    public enum SceneState { Unknown, MainMenu, Cutscene, Tutorial, Endless }
+    public SceneState CurrentSceneState { get; private set; } = SceneState.Unknown;
+
+    public bool IsMainMenu => CurrentSceneState == SceneState.MainMenu;
+
     // ── Mode & index ─────────────────────────────────────────────────────────────
     public int  CurrentLevelIndex        { get; private set; }
     public bool TutorialComplete         { get; private set; }
@@ -82,11 +88,40 @@ public class GameManager : StateMachine<GameManager>
             Instance.BootstrapCurrentScene();
     }
 
-    // Called only when auto-bootstrapped. Starts endless mode in whatever scene is already loaded.
+    // Called only when auto-bootstrapped. Detects what kind of scene we landed in and sets state.
     private void BootstrapCurrentScene()
     {
+        string path = SceneManager.GetActiveScene().path;
+
+        if (MainMenuScene != null && path == MainMenuScene.ScenePath)
+        {
+            CurrentSceneState = SceneState.MainMenu;
+            return;
+        }
+
+        if (IntroScene != null && path == IntroScene.ScenePath ||
+            OutroScene != null && path == OutroScene.ScenePath)
+        {
+            CurrentSceneState = SceneState.Cutscene;
+            return;
+        }
+
+        if (LevelScenes != null)
+        {
+            for (int i = 0; i < LevelScenes.Length; i++)
+            {
+                if (LevelScenes[i] != null && path == LevelScenes[i].ScenePath)
+                {
+                    CurrentSceneState = SceneState.Tutorial;
+                    CurrentLevelIndex = i;
+                    return;
+                }
+            }
+        }
+
         if (FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None).Length == 0) return;
         IsEndlessMode        = true;
+        CurrentSceneState    = SceneState.Endless;
         CurrentEnemyBudget   = BaseEnemyBudget;
         _sessionStartTime    = Time.time;
         _levelStartTime      = Time.time;
@@ -169,14 +204,15 @@ public class GameManager : StateMachine<GameManager>
 
     // ── Public API ────────────────────────────────────────────────────────────────
 
-    public void LoadMainMenu()                  => RequestTransition(MainMenuScene);
-    public void LoadIntro()                     => RequestTransition(IntroScene);
-    public void LoadOutro()                     => RequestTransition(OutroScene);
+    public void LoadMainMenu() { CurrentSceneState = SceneState.MainMenu;  RequestTransition(MainMenuScene); }
+    public void LoadIntro()    { CurrentSceneState = SceneState.Cutscene;  RequestTransition(IntroScene);    }
+    public void LoadOutro()    { CurrentSceneState = SceneState.Cutscene;  RequestTransition(OutroScene);    }
     public void LoadScene(SceneReference scene) => RequestTransition(scene);
 
     public void LoadLevel(int index)
     {
         if (index < 0 || index >= LevelScenes.Length) return;
+        CurrentSceneState = SceneState.Tutorial;
         CurrentLevelIndex = index;
         RequestTransition(LevelScenes[index]);
     }
@@ -228,6 +264,7 @@ public class GameManager : StateMachine<GameManager>
     public void StartEndlessMode()
     {
         IsEndlessMode            = true;
+        CurrentSceneState        = SceneState.Endless;
         CurrentEnemyBudget       = BaseEnemyBudget;
         CurrentEndlessLevelIndex = -1;
         _sessionStartTime        = Time.time;

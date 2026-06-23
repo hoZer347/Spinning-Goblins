@@ -9,6 +9,7 @@ public class PlayerController : StateMachine<PlayerController>
 	public Rigidbody2D Rigidbody;
 	public Collider2D Collider;
 	public LineRenderer DragLine;
+	public LineRenderer DragLineShadow;
 	public SpriteRenderer Sprite;
 
 	[Header("Launch")]

@@ -382,8 +382,8 @@ MonoBehaviour:
   Panels:
   - {fileID: 415147841}
   NextScene:
-    sceneAsset: {fileID: 102900000, guid: ceea99d97d7058c468db847d6102bf94, type: 3}
-    scenePath: Assets/Scenes/Levels/Level 1.unity
+    sceneAsset: {fileID: 102900000, guid: 656d3f94f9a3d724bb5b944bd66cae92, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 1.unity
   AllowSkip: 1
   references:
     version: 2

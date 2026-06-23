@@ -118,9 +118,7 @@ public class PlayerSpriteAnimator : MonoBehaviour
         UpdateImpactScale(state);
     }
 
-    // Lean + stretch like a loaded slingshot. The pull's dominant axis chooses the stretch axis, and
-    // the tilt is measured off that nearest axis so the goblin leans at most 45° and a straight
-    // horizontal / vertical pull leaves it perfectly upright.
+    // Point the sprite's top toward the launch direction and stretch along it like a loaded slingshot.
     private void ApplyDragPose()
     {
         _squashTimer = _stretchTimer = 0f; // no impacts mid-drag; don't let a stale one fire on release
@@ -136,21 +134,18 @@ public class PlayerSpriteAnimator : MonoBehaviour
         }
 
         dir.Normalize();
-        bool  alongX = Mathf.Abs(dir.x) > Mathf.Abs(dir.y);
-        float t      = _player.MaxLaunchPower > 0f
+        float t = _player.MaxLaunchPower > 0f
             ? Mathf.Clamp01(_player.LaunchForce.magnitude / _player.MaxLaunchPower)
             : 0f;
 
-        float along  = 1f + t * DragStretch; // elongate along the pull
+        float along  = 1f + t * DragStretch; // elongate along the launch direction
         float across = 1f / along;           // thin out across it
 
-        float tilt = alongX
-            ? Mathf.Atan2(Mathf.Sign(dir.x) * dir.y, Mathf.Abs(dir.x)) * Mathf.Rad2Deg
-            : Mathf.Atan2(-Mathf.Sign(dir.y) * dir.x, Mathf.Abs(dir.y)) * Mathf.Rad2Deg;
+        // Rotate so local +Y (the sprite's top) points toward the launch direction.
+        float tilt = -Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg;
 
-        Vector3 target = alongX
-            ? new Vector3(_baseScale.x * along,  _baseScale.y * across, _baseScale.z)
-            : new Vector3(_baseScale.x * across, _baseScale.y * along,  _baseScale.z);
+        // Stretch along local Y (the launch axis) since the sprite is now rotated to face it.
+        Vector3 target = new Vector3(_baseScale.x * across, _baseScale.y * along, _baseScale.z);
 
         transform.localScale    = Vector3.Lerp(transform.localScale, target, follow);
         transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(0f, 0f, tilt), follow);

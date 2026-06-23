@@ -19,14 +19,34 @@ public class St_Pl_Dragging : St_Pl_Base
         Focus.Rigidbody.linearVelocity = Vector2.zero;
         _origin = Focus.transform.position;
 
+        string spriteLayer = Focus.Sprite != null ? Focus.Sprite.sortingLayerName : "Default";
+        int    spriteOrder = Focus.Sprite != null ? Focus.Sprite.sortingOrder     : 0;
+
         if (Focus.DragLine != null)
         {
-            Focus.DragLine.enabled = true;
-            Focus.DragLine.positionCount = 0;
-            Focus.DragLine.startWidth = 0.04f;
-            Focus.DragLine.endWidth = 0.01f;
+            Focus.DragLine.enabled            = true;
+            Focus.DragLine.positionCount      = 0;
+            Focus.DragLine.startWidth         = 0.09f;
+            Focus.DragLine.endWidth           = 0.03f;
+            Focus.DragLine.startColor         = Color.white;
+            Focus.DragLine.endColor           = Color.white;
+            Focus.DragLine.material.color     = Color.white;
+            Focus.DragLine.sortingLayerName   = spriteLayer;
+            Focus.DragLine.sortingOrder       = spriteOrder - 1;
         }
-        ;
+
+        if (Focus.DragLineShadow != null)
+        {
+            Focus.DragLineShadow.enabled            = true;
+            Focus.DragLineShadow.positionCount      = 0;
+            Focus.DragLineShadow.startWidth         = 0.15f;
+            Focus.DragLineShadow.endWidth           = 0.06f;
+            Focus.DragLineShadow.startColor         = Color.black;
+            Focus.DragLineShadow.endColor           = Color.black;
+            Focus.DragLineShadow.material.color     = Color.black;
+            Focus.DragLineShadow.sortingLayerName   = spriteLayer;
+            Focus.DragLineShadow.sortingOrder       = spriteOrder - 2;
+        }
 
 		Focus.audioSource.PlayOneShot(Focus.stretch, 0.5f);
 
@@ -66,13 +86,22 @@ public class St_Pl_Dragging : St_Pl_Base
         Focus.transform.position = new Vector3(targetPos.x, targetPos.y, Focus.transform.position.z);
 
         // Line from the pulled-back body, through origin, out along the launch direction.
+        Vector3 lineStart = Focus.transform.position;
+        Vector3 lineEnd   = (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z);
+
         if (Focus.DragLine != null)
         {
             Focus.DragLine.positionCount = 2;
-            Focus.DragLine.SetPosition(0, Focus.transform.position);
-            Focus.DragLine.SetPosition(1, (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z));
+            Focus.DragLine.SetPosition(0, lineStart);
+            Focus.DragLine.SetPosition(1, lineEnd);
         }
-        ;
+
+        if (Focus.DragLineShadow != null)
+        {
+            Focus.DragLineShadow.positionCount = 2;
+            Focus.DragLineShadow.SetPosition(0, lineStart);
+            Focus.DragLineShadow.SetPosition(1, lineEnd);
+        }
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
             SetState<St_Pl_Flying>();
@@ -98,7 +127,8 @@ public class St_Pl_Dragging : St_Pl_Base
     {
         // Launch from where the body actually is (the stretched position) instead of snapping
         // back to the drag origin — the flight begins from where the player starts moving.
-        if (Focus.DragLine != null) Focus.DragLine.enabled = false;
+        if (Focus.DragLine != null)       Focus.DragLine.enabled       = false;
+        if (Focus.DragLineShadow != null) Focus.DragLineShadow.enabled = false;
 
         Focus.audioSource.PlayOneShot(Focus.spinWoosh);
     }

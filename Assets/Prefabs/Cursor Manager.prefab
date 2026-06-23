@@ -222,8 +222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6d15d94ac8d96142963029c22634909, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CursorManager
-  Player: {fileID: 0}
   NormalSprite: {fileID: -2510476293373519475, guid: b0252528834dd974c8ec125169b25737, type: 3}
+  HoverSprite: {fileID: 0}
+  ClickSprite: {fileID: 0}
   DragSprite: {fileID: -6888756438569675735, guid: 50b3fb452d17cd548bbd6a4335fa6753, type: 3}
-  NormalPivot: {x: 0, y: 0}
-  DragPivot: {x: 0.5, y: 0.5}

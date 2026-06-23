@@ -53,9 +53,18 @@ public class GoalFlag : MonoBehaviour
 
         _reached = true;
 
-        if (!string.IsNullOrEmpty(NextScene.ScenePath))
-            SceneManager.LoadScene(NextScene.ScenePath);
-        else
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadNextLevel();
+            return;
+        }
+
+        if (NextScene == null || string.IsNullOrEmpty(NextScene.ScenePath))
+        {
             Debug.LogWarning("[GoalFlag] No Next Scene assigned.", this);
+            return;
+        }
+
+        SceneManager.LoadScene(NextScene.ScenePath);
     }
 }
