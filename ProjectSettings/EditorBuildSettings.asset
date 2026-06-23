@@ -11,27 +11,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Levels/Tutorial 1.unity
     guid: 656d3f94f9a3d724bb5b944bd66cae92
-  - enabled: 0
-    path: Assets/Scenes/Tutorials/Level 2.unity
-    guid: b30817c0fd330b44993fe005acd8be8b
-  - enabled: 0
-    path: Assets/Scenes/Tutorials/Level 3.unity
-    guid: 237e942c505b3a2469f891d5c2a0d2e8
-  - enabled: 1
-    path: Assets/Scenes/Levels/Tutorial 4.unity
-    guid: f4f2d4c3f4e61224da8a68e9089bdd49
-  - enabled: 0
-    path: Assets/Scenes/Tutorials/Level 1.unity
-    guid: ceea99d97d7058c468db847d6102bf94
-  - enabled: 1
-    path: Assets/Scenes/Menu/Intro Cutscene.unity
-    guid: 4b74602e6c34c7a4b9078fff1d52027a
-  - enabled: 1
-    path: Assets/Scenes/Menu/Outro Cutscene.unity
-    guid: 1eef6a9333bbd7c48be2206efca267e0
-  - enabled: 1
-    path: Assets/Scenes/Battle/Battle 1.unity
-    guid: 43453b72e1498c3469a31582d0dd801b
   - enabled: 1
     path: Assets/Scenes/Levels/Tutorial 2.unity
     guid: 2513ed9c161b5d84c92e992172cea05e
@@ -39,14 +18,23 @@ EditorBuildSettings:
     path: Assets/Scenes/Levels/Tutorial 3.unity
     guid: 379b57d1fc254c84d9694815812cb680
   - enabled: 1
+    path: Assets/Scenes/Levels/Tutorial 4.unity
+    guid: f4f2d4c3f4e61224da8a68e9089bdd49
+  - enabled: 1
     path: Assets/Scenes/Levels/Tutorial 5.unity
     guid: 5d6bc45732bf9cf4f8087a80341ea76d
   - enabled: 1
     path: Assets/Scenes/Levels/Tutorial 6.unity
     guid: 9edeff9799c4b9242a94ea2d4c659474
   - enabled: 1
-    path: Assets/Scenes/Levels/Spikes.unity
-    guid: 517603749d311814f9523ce387ae9215
+    path: Assets/Scenes/Battle/Battle 1.unity
+    guid: 43453b72e1498c3469a31582d0dd801b
+  - enabled: 1
+    path: Assets/Scenes/Menu/Intro Cutscene.unity
+    guid: 4b74602e6c34c7a4b9078fff1d52027a
+  - enabled: 1
+    path: Assets/Scenes/Menu/Outro Cutscene.unity
+    guid: 1eef6a9333bbd7c48be2206efca267e0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
