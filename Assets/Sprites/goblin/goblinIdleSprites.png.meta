@@ -1,31 +1,19 @@
 fileFormatVersion: 2
-guid: f5aa599db289951439a7dd9ad62d43e5
+guid: 696fb7bb856b2ed4a8f39318723efbaa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4256394377300631199
-    second: goblinSpinSprites 1_0
+      213: -5920194612128632720
+    second: goblinIdleSprites_0
   - first:
-      213: 8299370221428555724
-    second: goblinSpinSprites 1_1
+      213: -8857337163143551245
+    second: goblinIdleSprites_1
   - first:
-      213: -1485772086951958974
-    second: goblinSpinSprites 1_2
+      213: -4477740603838114550
+    second: goblinIdleSprites_2
   - first:
-      213: 844465976065644393
-    second: goblinSpinSprites 1_3
-  - first:
-      213: 8663800253072586694
-    second: goblinSpinSprites 1_4
-  - first:
-      213: -199081009234113921
-    second: goblinSpinSprites 1_5
-  - first:
-      213: 7329508009664236562
-    second: goblinSpinSprites 1_6
-  - first:
-      213: -3221416237134806709
-    second: goblinSpinSprites 1_7
+      213: -613801043789366247
+    second: goblinIdleSprites_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -121,7 +109,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: goblinSpinSprites 1_0
+      name: goblinIdleSprites_0
       rect:
         serializedVersion: 2
         x: 2
@@ -136,86 +124,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f9e59f28220c11b30800000000000000
-      internalID: 4256394377300631199
+      spriteID: 07034e6ed5e37dda0800000000000000
+      internalID: -5920194612128632720
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: goblinSpinSprites 1_1
+      name: goblinIdleSprites_1
       rect:
         serializedVersion: 2
-        x: 36
-        y: 1
-        width: 24
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ccf34b39e394d2370800000000000000
-      internalID: 8299370221428555724
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: goblinSpinSprites 1_2
-      rect:
-        serializedVersion: 2
-        x: 69
-        y: 1
-        width: 21
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 246a90ca82a716be0800000000000000
-      internalID: -1485772086951958974
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: goblinSpinSprites 1_3
-      rect:
-        serializedVersion: 2
-        x: 99
-        y: 1
-        width: 24
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 967db40c45528bb00800000000000000
-      internalID: 844465976065644393
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: goblinSpinSprites 1_4
-      rect:
-        serializedVersion: 2
-        x: 130
+        x: 34
         y: 1
         width: 28
-        height: 30
+        height: 29
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -224,20 +146,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6c7b4596d600c3870800000000000000
-      internalID: 8663800253072586694
+      spriteID: 3f666fe37ca641580800000000000000
+      internalID: -8857337163143551245
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: goblinSpinSprites 1_5
+      name: goblinIdleSprites_2
       rect:
         serializedVersion: 2
-        x: 165
+        x: 66
         y: 1
-        width: 24
-        height: 30
+        width: 28
+        height: 27
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -246,20 +168,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f7a031b70e8bc3df0800000000000000
-      internalID: -199081009234113921
+      spriteID: a05d2e715aedbd1c0800000000000000
+      internalID: -4477740603838114550
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: goblinSpinSprites 1_6
+      name: goblinIdleSprites_3
       rect:
         serializedVersion: 2
-        x: 198
+        x: 98
         y: 1
-        width: 21
-        height: 30
+        width: 28
+        height: 29
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -268,30 +190,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 21cca6e83b4a7b560800000000000000
-      internalID: 7329508009664236562
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: goblinSpinSprites 1_7
-      rect:
-        serializedVersion: 2
-        x: 228
-        y: 1
-        width: 24
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b4187e7000b3b43d0800000000000000
-      internalID: -3221416237134806709
+      spriteID: 91cbb26e3375b77f0800000000000000
+      internalID: -613801043789366247
       vertices: []
       indices: 
       edges: []
@@ -310,14 +210,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      goblinSpinSprites 1_0: 4256394377300631199
-      goblinSpinSprites 1_1: 8299370221428555724
-      goblinSpinSprites 1_2: -1485772086951958974
-      goblinSpinSprites 1_3: 844465976065644393
-      goblinSpinSprites 1_4: 8663800253072586694
-      goblinSpinSprites 1_5: -199081009234113921
-      goblinSpinSprites 1_6: 7329508009664236562
-      goblinSpinSprites 1_7: -3221416237134806709
+      goblinIdleSprites_0: -5920194612128632720
+      goblinIdleSprites_1: -8857337163143551245
+      goblinIdleSprites_2: -4477740603838114550
+      goblinIdleSprites_3: -613801043789366247
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
