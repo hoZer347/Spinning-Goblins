@@ -31,7 +31,7 @@ public class MenuManager : MonoBehaviour
 
     // --- Button callbacks ---------------------------------------------------
 
-    public void OnPlay()       => GameManager.Instance?.LoadIntro();
+    public void OnPlay()       => GameManager.Instance?.StartGame();
     public void OnSettings()   => TransitionTo(SettingsPanel);
     public void OnCredits()    => TransitionTo(CreditsPanel);
     public void OnBackToMain() => TransitionTo(MainPanel);

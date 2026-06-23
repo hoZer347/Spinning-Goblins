@@ -1,5 +1,6 @@
 using Tymski;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using hoZer;
 
 /// <summary>
@@ -22,6 +23,11 @@ public class GameManager : StateMachine<GameManager>
     [Header("Transition")]
     public ScreenFader Fader;
 
+    [Header("Tutorial Skip")]
+    [Tooltip("First scene after the tutorial (e.g. Battle 1). Reaching it marks the tutorial " +
+             "complete; once it has been, Play skips straight here instead of replaying the tutorial.")]
+    public SceneReference PostTutorialScene;
+
     // Index into LevelScenes of the level currently loaded (or most recently played).
     public int CurrentLevelIndex { get; private set; } = 0;
 
@@ -37,6 +43,42 @@ public class GameManager : StateMachine<GameManager>
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+    // Reaching the first post-tutorial scene — however we got there (goal flag, enemy-clear,
+    // or the Play-time skip) — records the tutorial as done.
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (PostTutorialScene == null) return;
+
+        string target = PostTutorialScene.ScenePath;
+        if (string.IsNullOrEmpty(target)) return;
+
+        // Match on full path or scene name, so it works whether ScenePath is a path or a name.
+        if (scene.path == target ||
+            scene.name == System.IO.Path.GetFileNameWithoutExtension(target))
+            TutorialProgress.Completed = true;
+    }
+
+    /// <summary>
+    /// Menu "Play" entry point: jump straight to the post-tutorial scene once the tutorial has been
+    /// completed before; otherwise start the normal intro -> tutorial flow.
+    /// </summary>
+    public void StartGame()
+    {
+        if (TutorialProgress.Completed
+            && PostTutorialScene != null
+            && !string.IsNullOrEmpty(PostTutorialScene.ScenePath))
+            LoadScene(PostTutorialScene);
+        else
+            LoadIntro();
     }
 
     protected override void OnStart()
