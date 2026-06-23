@@ -94,24 +94,26 @@ namespace hoZer
 				PlayHit();                   // bounced off a wall mid-hitstun
 		}
 
-		// Spike/hazard contact: play the impact and spend one health dot. Death (when depleted) is
-		// handled by TakeDamage. The hit sound is sounded here, not in St_En1_Die, because Die can
-		// be entered for other reasons that shouldn't sound a hit.
+		// Spike/hazard contact: play the impact and spend one health dot. The damage cooldown lives
+		// HERE (hazard-only) so sliding along spikes coalesces into single hits, while a player hit
+		// never starts the cooldown — and therefore never blocks the spike it knocks the enemy into.
 		void HurtByHazard()
 		{
+			if (Time.time < damageReadyAt) return;
+			damageReadyAt = Time.time + damageCooldown;
+
 			PlayHit();
 			TakeDamage();
 		}
 
 		/// <summary>
-		/// Spends one health dot. A short cooldown coalesces rapid repeat contacts (e.g. sliding
-		/// along spikes) into single hits. Surviving a hit re-enters hitstun; reaching zero dies.
+		/// Spends one health dot. Surviving a hit re-enters hitstun; reaching zero dies. The hazard
+		/// coalescing cooldown is applied by the caller (HurtByHazard), not here, so player hits and
+		/// the spikes they cause both land.
 		/// </summary>
 		public void TakeDamage(int amount = 1)
 		{
 			if (Current is St_En1_Die || Current is St_En1_Falling) return;
-			if (Time.time < damageReadyAt) return;
-			damageReadyAt = Time.time + damageCooldown;
 
 			health = Mathf.Max(0, health - amount);
 			if (healthBar != null) healthBar.SetHealth(health);
@@ -122,12 +124,17 @@ namespace hoZer
 				SetState<St_En1_Hitstun>();
 		}
 
-		// Plays the shared hit sound through the PLAYER's audio source, so it still sounds even
-		// when this enemy is being destroyed (which would kill its own AudioSource mid-clip).
+		// Plays the shared hit clip (it lives on the player) on a throwaway source via
+		// PlayClipAtPoint, so it (a) survives this enemy being destroyed, and (b) isn't masked by
+		// the player's own source, which is busy machine-gunning spin whooshes during flight.
+		// Played at the camera/listener so it stays full 2D volume wherever the enemy is.
 		public void PlayHit()
 		{
-			if (playerController != null && playerController.audioSource != null && playerController.hit != null)
-				playerController.audioSource.PlayOneShot(playerController.hit, 0.3f);
+			AudioClip clip = playerController != null ? playerController.hit : null;
+			if (clip == null) return;
+
+			Vector3 at = Camera.main != null ? Camera.main.transform.position : transform.position;
+			AudioSource.PlayClipAtPoint(clip, at, 0.6f);
 		}
 
 		protected override void OnStart()
