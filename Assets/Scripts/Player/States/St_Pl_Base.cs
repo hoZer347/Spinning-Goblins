@@ -94,7 +94,6 @@ public abstract class St_Pl_Base : State<PlayerController>
     {
         if (Focus.IsInvulnerable) return;
 
-        // Spikes / damage impact.
         Focus.audioSource.PlayOneShot(Focus.hit, .3f);
         Focus.ShakeCamera();
 

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 
@@ -28,6 +27,7 @@ namespace hoZer
 
 		[Header("Hitstun Settings")]
 		[SerializeField] public float				hitstunDuration		= 0.5f;
+		[SerializeField] public float				hitstunKnockback	= 18f;
 		[SerializeField] public float				stopFriction		= 5f;
 		[SerializeField] public float				pauseDuration		= 1.0f;
 
@@ -52,7 +52,9 @@ namespace hoZer
 		[Header("Death Settings")]
 		[SerializeField] public float				fallingDuration		= 1.0f;
 
-		[Header("Health")]
+ 		[Header("Health")]
+		[Tooltip("How much of the enemy budget this prefab costs when spawned.")]
+		[SerializeField] public float				spawnCost			= 1f;
 		[SerializeField] public int					maxHealth			= 3;
 		[SerializeField] public float				damageCooldown		= 0.25f;
 		[SerializeField] public float				healthBarHeight		= 0.6f;

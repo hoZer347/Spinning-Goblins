@@ -12,6 +12,14 @@ public class St_Pl_Idle : St_Pl_Base
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
+
+        // Only chain immediately if the previous state was Stopping (held through a stop).
+        // Any other entry (first spawn, scene load, cutscene) requires a fresh click.
+        if (lastState is St_Pl_Stopping && Mouse.current.leftButton.isPressed)
+        {
+            Focus.DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            SetState<St_Pl_Dragging>();
+        }
     }
 
     public override void OnUpdate()

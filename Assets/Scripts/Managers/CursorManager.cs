@@ -1,79 +1,124 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 
 [RequireComponent(typeof(Image))]
 public class CursorManager : MonoBehaviour
 {
-    [Header("References")]
-    public PlayerController Player;
+    public static CursorManager Instance { get; private set; }
 
     [Header("Sprites")]
     public Sprite NormalSprite;
     public Sprite DragSprite;
 
-    [Header("Pivot")]
-    public Vector2 NormalPivot = new Vector2(0.5f, 0.5f);
-    public Vector2 DragPivot = new Vector2(0.5f, 0.5f);
+    private Image            _image;
+    private RectTransform    _rect;
+    private Camera           _cam;
+    private Vector2          _screenPos;
+    private bool             _wasDragging;
+    private PlayerController _player;
 
-    private Image _image;
-    private RectTransform _rect;
-    private Camera _cam;
-    private Vector2 _screenPos;
-    private bool _wasDragging;
+    private bool _initialized;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(transform.root.gameObject); return; }
+        Instance = this;
+        _initialized = true;
+        DontDestroyOnLoad(transform.root.gameObject);
+
         _image = GetComponent<Image>();
-        _rect = GetComponent<RectTransform>();
-        _cam = Camera.main;
+        _image.raycastTarget = false;
+        _rect  = GetComponent<RectTransform>();
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null) canvas.sortingOrder = 32767;
+
+        // Always mirror the cursor sprite on X.
+        Vector3 s = _rect.localScale;
+        s.x = -Mathf.Abs(s.x);
+        _rect.localScale = s;
+    }
+
+    private void OnEnable()
+    {
+        if (!_initialized) return;
+        Cursor.visible = false;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        if (!_initialized) return;
+        Cursor.visible = true;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
     {
         _screenPos = Mouse.current.position.ReadValue();
+        RefreshReferences();
     }
 
-    private void OnEnable() => Cursor.visible = false;
-    private void OnDisable() => Cursor.visible = true;
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => RefreshReferences();
+
+    private void RefreshReferences()
+    {
+        _cam    = Camera.main;
+        _player = Object.FindAnyObjectByType<PlayerController>();
+    }
 
     private void Update()
     {
-        bool isDragging = Player.Current is St_Pl_Dragging;
-        Vector2 mouseScreen = Mouse.current.position.ReadValue();
+        if (!_initialized) return;
+        if (_cam == null) _cam = Camera.main;
 
-        if (isDragging)
+        Vector2 mouseScreen = Mouse.current.position.ReadValue();
+        bool    isClicking  = Mouse.current.leftButton.isPressed;
+
+        var  state      = GameManager.Instance?.CurrentSceneState;
+        bool isUIScene  = state == GameManager.SceneState.MainMenu
+                       || state == GameManager.SceneState.Cutscene;
+
+        if (isUIScene)
         {
-            _screenPos    = _cam.WorldToScreenPoint(Player.transform.position);
-            _image.sprite = DragSprite;
-            _rect.pivot   = DragPivot;
+            _screenPos    = mouseScreen;
+            _wasDragging  = false;
+            _image.sprite = isClicking ? DragSprite ?? NormalSprite : NormalSprite;
         }
         else
         {
-            if (_wasDragging)
+            if (_player == null) _player = Object.FindAnyObjectByType<PlayerController>();
+
+            bool isDragging = _player != null && _player.Current is St_Pl_Dragging;
+
+            if (isDragging)
             {
-                // Warp the OS mouse to the sprite's current position.
-                // Don't read mouse this frame — the warp won't propagate until next frame.
-                Mouse.current.WarpCursorPosition(_screenPos);
+                _screenPos    = _cam.WorldToScreenPoint(_player.transform.position);
+                _image.sprite = DragSprite != null ? DragSprite : NormalSprite;
             }
             else
             {
-                _screenPos = mouseScreen;
+                if (_wasDragging)
+                    Mouse.current.WarpCursorPosition(_screenPos);
+                else
+                    _screenPos = mouseScreen;
+
+                _image.sprite = NormalSprite;
             }
 
-            _image.sprite = NormalSprite;
-            _rect.pivot = NormalPivot;
+            _wasDragging = isDragging;
         }
 
-        _wasDragging = isDragging;
+        Cursor.visible = false;
 
-        // Clamp to screen bounds.
-        float hw = _rect.rect.width * 0.5f;
+        float hw = _rect.rect.width  * 0.5f;
         float hh = _rect.rect.height * 0.5f;
-        _screenPos.x = Mathf.Clamp(_screenPos.x, hw, Screen.width - hw);
+        _screenPos.x = Mathf.Clamp(_screenPos.x, hw, Screen.width  - hw);
         _screenPos.y = Mathf.Clamp(_screenPos.y, hh, Screen.height - hh);
 
-        _rect.position = _screenPos;
+        _rect.position = new Vector3(_screenPos.x, _screenPos.y, 0);
     }
 }
