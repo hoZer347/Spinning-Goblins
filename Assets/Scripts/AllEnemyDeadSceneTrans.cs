@@ -21,23 +21,20 @@ public class AllEnemyDeadSceneTrans : MonoBehaviour
 		{
 			if (duration.Tick())
 			{
-				// An explicitly assigned nextScene wins: this transition points straight at the
-				// next scene, self-contained. Only when no scene is assigned do we defer to the
-				// GameManager, which drives endless-mode level progression.
-				string scene = nextScene != null ? nextScene.ScenePath : null;
-				if (!string.IsNullOrEmpty(scene))
+				// Always route through GameManager so CurrentLevelIndex stays in sync.
+				if (GameManager.Instance != null)
 				{
-					SceneManager.LoadScene(scene);
-				}
-				else if (GameManager.Instance != null)
-				{
+					Debug.Log($"[AllEnemyDeadSceneTrans] All enemies dead — calling GameManager.LoadNextLevel (currentIndex={GameManager.Instance.CurrentLevelIndex})");
 					GameManager.Instance.LoadNextLevel();
+				}
+				else if (nextScene != null && !string.IsNullOrEmpty(nextScene.ScenePath))
+				{
+					Debug.Log($"[AllEnemyDeadSceneTrans] All enemies dead — no GameManager, loading nextScene: {nextScene.ScenePath}");
+					SceneManager.LoadScene(nextScene.ScenePath);
 				}
 				else
 				{
-					Debug.LogError("[AllEnemyDeadSceneTrans] nextScene resolved to an empty path — " +
-						"re-assign it in the Inspector and confirm the target scene is in Build Settings. " +
-						"(Tymski SceneReference can serialize empty into a build.)", this);
+					Debug.LogError("[AllEnemyDeadSceneTrans] No GameManager and no nextScene assigned.", this);
 				}
 			}
 		}

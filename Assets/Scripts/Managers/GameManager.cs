@@ -24,6 +24,7 @@ public class GameManager : StateMachine<GameManager>
 
     [Header("Transition")]
     public ScreenFader Fader;
+    public SceneSwiper Swiper;
 
     [Header("Tutorial Skip")]
     [Tooltip("First scene after the tutorial (e.g. Battle 1). Reaching it marks the tutorial " +
@@ -264,6 +265,7 @@ public class GameManager : StateMachine<GameManager>
     {
         if (IsEndlessMode)
         {
+            Debug.Log("[GameManager] LoadNextLevel → endless mode, advancing endless level.");
             AdvanceEndlessLevel();
             return;
         }
@@ -271,10 +273,12 @@ public class GameManager : StateMachine<GameManager>
         int next = CurrentLevelIndex + 1;
         if (next < LevelScenes.Length)
         {
+            Debug.Log($"[GameManager] LoadNextLevel → tutorial {CurrentLevelIndex} → {next}");
             LoadLevel(next);
         }
         else
         {
+            Debug.Log($"[GameManager] LoadNextLevel → all {LevelScenes.Length} tutorial levels done, starting endless.");
             TutorialComplete = true;
             StartEndlessMode();
         }
@@ -370,6 +374,53 @@ public class GameManager : StateMachine<GameManager>
         CurrentEndlessLevelIndex = next;
         _levelStartTime          = Time.time;
         RequestTransition(EndlessLevelScenes[next]);
+    }
+
+    /// <summary>
+    /// Called when a cutscene ends and no explicit NextScene is set on the CutsceneManager.
+    /// Routes to the first tutorial level (intro) or main menu (outro).
+    /// </summary>
+    public void OnCutsceneComplete()
+    {
+        if (CurrentSceneState != SceneState.Cutscene)
+        {
+            Debug.Log($"[GameManager] OnCutsceneComplete → ignored (state={CurrentSceneState}, not in a cutscene scene).");
+            return;
+        }
+
+        if (!IsEndlessMode)
+        {
+            Debug.Log("[GameManager] OnCutsceneComplete → starting tutorial from level 0.");
+            LoadLevel(0);
+        }
+        else
+        {
+            Debug.Log("[GameManager] OnCutsceneComplete → returning to main menu.");
+            LoadMainMenu();
+        }
+    }
+
+    /// <summary>
+    /// Called when the player dies. Routes based on current game state:
+    /// endless → random endless map; tutorial done → start endless; tutorial → restart same level.
+    /// </summary>
+    public void OnPlayerDied()
+    {
+        if (IsEndlessMode)
+        {
+            Debug.Log("[GameManager] OnPlayerDied → endless mode, picking new random level.");
+            LoadNextEndlessLevel();
+        }
+        else if (TutorialComplete)
+        {
+            Debug.Log("[GameManager] OnPlayerDied → tutorial complete, starting endless.");
+            StartEndlessMode();
+        }
+        else
+        {
+            Debug.Log($"[GameManager] OnPlayerDied → restarting tutorial level {CurrentLevelIndex}.");
+            LoadLevel(CurrentLevelIndex);
+        }
     }
 
     private void RequestTransition(SceneReference scene)

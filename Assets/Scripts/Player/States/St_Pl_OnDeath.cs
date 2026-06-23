@@ -36,9 +36,11 @@ public class St_Pl_OnDeath : St_Pl_Base
         {
             _resetting = true;
 
-            // Reload the currently active scene.
-            Scene current = SceneManager.GetActiveScene();
-            SceneManager.LoadScene(current.buildIndex);
+            var gm = GameManager.Instance;
+            if (gm != null)
+                gm.OnPlayerDied();
+            else
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 }

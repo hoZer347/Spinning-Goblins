@@ -7,6 +7,13 @@ public class St_Cs_Complete : State<CutsceneManager>
 {
     public override void OnEnter(State lastState)
     {
-        GameManager.Instance?.LoadScene(Focus.NextScene);
+        var gm = GameManager.Instance;
+        if (gm == null) return;
+
+        string path = Focus.NextScene?.ScenePath;
+        if (!string.IsNullOrEmpty(path))
+            gm.LoadScene(Focus.NextScene);
+        else
+            gm.OnCutsceneComplete();
     }
 }

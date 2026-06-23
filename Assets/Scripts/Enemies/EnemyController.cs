@@ -94,16 +94,12 @@ namespace hoZer
 
 			if (enemyController.Length != 0) return;
 
-			// Optional cutscene-driven transition. Guarded so levels WITHOUT a CutsceneManager
-			// (those use AllEnemyDeadSceneTrans) don't NRE, and an unset / build-empty scene
-			// reference never calls SceneManager.LoadScene("") (the "invalid scene name" error).
-			CutsceneManager cutscene = FindAnyObjectByType<CutsceneManager>();
-			string next = cutscene != null && cutscene.NextScene != null
-				? cutscene.NextScene.ScenePath
-				: null;
-
-			if (!string.IsNullOrEmpty(next))
-				SceneManager.LoadScene(next);
+			// Route through GameManager so the swipe transition fires and CurrentLevelIndex stays in sync.
+			if (GameManager.Instance != null)
+			{
+				Debug.Log("[EnemyController] Last enemy destroyed — calling GameManager.LoadNextLevel()");
+				GameManager.Instance.LoadNextLevel();
+			}
 		}
 
 		private void OnCollisionEnter2D(Collision2D collision)

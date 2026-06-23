@@ -16,17 +16,24 @@ public class St_Gm_Transitioning : State<GameManager>
 
 	private IEnumerator TransitionRoutine()
 	{
-		if (Focus.Fader != null)
+		Debug.Log($"[St_Gm_Transitioning] Starting transition to: {Focus.PendingScenePath} | swiper={(Focus.Swiper != null ? "OK" : "NULL")} fader={(Focus.Fader != null ? "OK" : "NULL")}");
+
+		// Slide panel in to cover the screen before the load.
+		if (Focus.Swiper != null)
+		{
+			Debug.Log("[St_Gm_Transitioning] SwipeIn...");
+			yield return Focus.StartCoroutine(Focus.Swiper.SwipeIn());
+		}
+		else if (Focus.Fader != null)
 			yield return Focus.StartCoroutine(Focus.Fader.FadeOut());
 
 		AsyncOperation load = SceneManager.LoadSceneAsync(Focus.PendingScenePath);
 		if (load == null)
 		{
-			// Scene isn't registered in Build Settings, so there's nothing to load. Recover cleanly
-			// back to Idle rather than erroring out — add the scene under File ▸ Build Settings if
-			// it's meant to be loadable.
 			Debug.LogWarning($"[GameManager] Scene not in build settings, skipping transition: {Focus.PendingScenePath}");
-			if (Focus.Fader != null)
+			if (Focus.Swiper != null)
+				yield return Focus.StartCoroutine(Focus.Swiper.SwipeOut());
+			else if (Focus.Fader != null)
 				yield return Focus.StartCoroutine(Focus.Fader.FadeIn());
 			SetState<St_Gm_Idle>();
 			yield break;
@@ -34,7 +41,8 @@ public class St_Gm_Transitioning : State<GameManager>
 		while (!load.isDone)
 			yield return null;
 
-		if (Focus.Fader != null)
+		// SwipeOut fires automatically via SceneSwiper.OnSceneLoaded when the new scene starts.
+		if (Focus.Swiper == null && Focus.Fader != null)
 			yield return Focus.StartCoroutine(Focus.Fader.FadeIn());
 
 		SetState<St_Gm_Idle>();

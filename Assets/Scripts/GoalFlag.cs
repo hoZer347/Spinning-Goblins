@@ -53,21 +53,22 @@ public class GoalFlag : MonoBehaviour
 
         _reached = true;
 
-        // An explicitly assigned NextScene wins: a tutorial flag points straight at the next
-        // scene, self-contained as documented above. Only when this flag has no scene assigned
-        // do we defer to the GameManager, which drives endless-mode level progression.
-        if (NextScene != null && !string.IsNullOrEmpty(NextScene.ScenePath))
-        {
-            SceneManager.LoadScene(NextScene.ScenePath);
-            return;
-        }
-
+        // Always route through GameManager so CurrentLevelIndex stays in sync.
+        // Only fall back to the Inspector-assigned NextScene when no GameManager exists.
         if (GameManager.Instance != null)
         {
+            Debug.Log($"[GoalFlag] Reached — calling GameManager.LoadNextLevel (currentIndex={GameManager.Instance.CurrentLevelIndex})");
             GameManager.Instance.LoadNextLevel();
             return;
         }
 
-        Debug.LogWarning("[GoalFlag] No Next Scene assigned.", this);
+        if (NextScene != null && !string.IsNullOrEmpty(NextScene.ScenePath))
+        {
+            Debug.Log($"[GoalFlag] Reached — no GameManager, loading NextScene directly: {NextScene.ScenePath}");
+            SceneManager.LoadScene(NextScene.ScenePath);
+            return;
+        }
+
+        Debug.LogWarning("[GoalFlag] No Next Scene assigned and no GameManager found.", this);
     }
 }

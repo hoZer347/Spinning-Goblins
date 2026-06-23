@@ -91,8 +91,9 @@ public class CursorManager : MonoBehaviour
         else
         {
             if (_player == null) _player = Object.FindAnyObjectByType<PlayerController>();
+            if (_cam    == null) _cam    = Camera.main;
 
-            bool isDragging = _player != null && _player.Current is St_Pl_Dragging;
+            bool isDragging = _player != null && _cam != null && _player.Current is St_Pl_Dragging;
 
             if (isDragging)
             {
