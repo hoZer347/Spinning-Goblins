@@ -62,10 +62,23 @@ namespace hoZer
 		float			damageReadyAt;
 		EnemyHealthBar	healthBar;
 
+		/// <summary>Remaining hit points — read by pit-kill scoring before the enemy drops in.</summary>
+		public int Health => health;
+
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
 		[SerializeField] public AudioClip			hitstunSound;
 		[SerializeField] public AudioClip			pitFall;
+
+		[Header("Sprites")]
+		[SerializeField] public Sprite				sprIdle;
+		[SerializeField] public Sprite				sprWalkUp;
+		[SerializeField] public Sprite				sprWalkLeft;
+		[SerializeField] public Sprite				sprWalkDown;
+		[SerializeField] public Sprite				sprWalkRight;
+		[SerializeField] public Sprite				sprSleeping;
+		[SerializeField] public Sprite				sprSpinning;
+		[SerializeField] public Sprite				sprFalling;
 
 		// Extra reach added to the look-ahead cast so a hazard is caught a hair before contact.
 		const float WallCastSkin = 0.05f;
@@ -74,16 +87,22 @@ namespace hoZer
 		{
 			if (!Application.isPlaying) return;
 
-			GameManager gm = GameManager.Instance;
-			if (gm == null) return;
+			EnemyController[] enemyController =
+				GameObject.FindObjectsByType<EnemyController>(
+					FindObjectsSortMode.None);
 
-			gm.OnEnemyKilled();
+			if (enemyController.Length != 0) return;
 
-			EnemyController[] remaining =
-				GameObject.FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+			// Optional cutscene-driven transition. Guarded so levels WITHOUT a CutsceneManager
+			// (those use AllEnemyDeadSceneTrans) don't NRE, and an unset / build-empty scene
+			// reference never calls SceneManager.LoadScene("") (the "invalid scene name" error).
+			CutsceneManager cutscene = FindAnyObjectByType<CutsceneManager>();
+			string next = cutscene != null && cutscene.NextScene != null
+				? cutscene.NextScene.ScenePath
+				: null;
 
-			if (remaining.Length == 0)
-				gm.LoadNextLevel();
+			if (!string.IsNullOrEmpty(next))
+				SceneManager.LoadScene(next);
 		}
 
 		private void OnCollisionEnter2D(Collision2D collision)
@@ -100,24 +119,27 @@ namespace hoZer
 				PlayHit();                   // bounced off a wall mid-hitstun
 		}
 
-		// Spike/hazard contact: play the impact and spend one health dot. Death (when depleted) is
-		// handled by TakeDamage. The hit sound is sounded here, not in St_En1_Die, because Die can
-		// be entered for other reasons that shouldn't sound a hit.
+		// Spike/hazard contact: play the impact and spend one health dot. The damage cooldown lives
+		// HERE (hazard-only) so sliding along spikes coalesces into single hits, while a player hit
+		// never starts the cooldown — and therefore never blocks the spike it knocks the enemy into.
 		void HurtByHazard()
 		{
+			if (Time.time < damageReadyAt) return;
+			damageReadyAt = Time.time + damageCooldown;
+
 			PlayHit();
+			ScoreUI.Instance?.AddHazardDamage(1); // 20 per point of damage dealt
 			TakeDamage();
 		}
 
 		/// <summary>
-		/// Spends one health dot. A short cooldown coalesces rapid repeat contacts (e.g. sliding
-		/// along spikes) into single hits. Surviving a hit re-enters hitstun; reaching zero dies.
+		/// Spends one health dot. Surviving a hit re-enters hitstun; reaching zero dies. The hazard
+		/// coalescing cooldown is applied by the caller (HurtByHazard), not here, so player hits and
+		/// the spikes they cause both land.
 		/// </summary>
 		public void TakeDamage(int amount = 1)
 		{
 			if (Current is St_En1_Die || Current is St_En1_Falling) return;
-			if (Time.time < damageReadyAt) return;
-			damageReadyAt = Time.time + damageCooldown;
 
 			health = Mathf.Max(0, health - amount);
 			if (healthBar != null) healthBar.SetHealth(health);
@@ -128,12 +150,17 @@ namespace hoZer
 				SetState<St_En1_Hitstun>();
 		}
 
-		// Plays the shared hit sound through the PLAYER's audio source, so it still sounds even
-		// when this enemy is being destroyed (which would kill its own AudioSource mid-clip).
+		// Plays the shared hit clip (it lives on the player) on a throwaway source via
+		// PlayClipAtPoint, so it (a) survives this enemy being destroyed, and (b) isn't masked by
+		// the player's own source, which is busy machine-gunning spin whooshes during flight.
+		// Played at the camera/listener so it stays full 2D volume wherever the enemy is.
 		public void PlayHit()
 		{
-			if (playerController != null && playerController.audioSource != null && playerController.hit != null)
-				playerController.audioSource.PlayOneShot(playerController.hit, 0.3f);
+			AudioClip clip = playerController != null ? playerController.hit : null;
+			if (clip == null) return;
+
+			Vector3 at = Camera.main != null ? Camera.main.transform.position : transform.position;
+			AudioSource.PlayClipAtPoint(clip, at, 0.6f);
 		}
 
 		protected override void OnStart()
@@ -154,6 +181,9 @@ namespace hoZer
 				// without this, kinematic-vs-static collisions are silent.
 				rigidbody.gravityScale = 0f;
 				rigidbody.useFullKinematicContacts = true;
+
+				// Stay upright — knockback bounces never spin the body (the spin is a sprite anim now).
+				rigidbody.freezeRotation = true;
 			};
 
 			// Slide over Pit tiles instead of bouncing off their solid edge, so the body can get
@@ -181,8 +211,8 @@ namespace hoZer
 				HurtByHazard();
 		}
 
-		// True if a Damage wall is within this step's travel, so we react before bouncing off it.
-		private bool DamageWallAhead()
+		// True if a collider on `mask` is within this step's travel along the current velocity.
+		private bool Ahead(int mask)
 		{
 			if (rigidbody == null || collider == null)
 				return false;
@@ -191,7 +221,7 @@ namespace hoZer
 			float   speed    = velocity.magnitude;
 
 			if (speed < 0.01f)
-				return false; // not sliding — nothing to pre-empt
+				return false; // not moving — nothing to pre-empt
 
 			float distance = speed * Time.fixedDeltaTime + WallCastSkin;
 
@@ -200,8 +230,15 @@ namespace hoZer
 				collider.bounds.extents.x,
 				velocity / speed,
 				distance,
-				LayerMask.GetMask("Damage")).collider != null;
+				mask).collider != null;
 		}
+
+		// A Damage wall ahead — react before bouncing off it.
+		private bool DamageWallAhead() => Ahead(LayerMask.GetMask("Damage"));
+
+		// A pit ahead — used to stop a self-propelled lunge before it carries the enemy into a pit
+		// by itself (it can still be knocked in, since that's not driven by this check).
+		public bool PitAhead() => Ahead(LayerMask.GetMask("Pits"));
 
 		protected virtual bool PlayerInRange() =>
 			Vector2.Distance(

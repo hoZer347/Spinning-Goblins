@@ -18,6 +18,10 @@ namespace hoZer
 		public override void OnEnter(State lastState)
 		{
 			Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
+
+			// Slide/scrape as the goblin brakes into the landing.
+			if (Focus.audioSource != null && Focus.gobSlide != null)
+				Focus.audioSource.PlayOneShot(Focus.gobSlide, .5f);
 		}
 
 		public override void OnUpdate()

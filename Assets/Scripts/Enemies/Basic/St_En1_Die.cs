@@ -11,6 +11,7 @@ namespace hoZer
 		{
 			base.OnEnter(lastState);
 
+			ScoreUI.Instance?.AddKill(); // 100 for a normal kill (pit kills score in St_En1_Falling)
 			GameObject.Destroy(Focus.gameObject);
 		}
 	};

@@ -80,6 +80,7 @@ public class PlayerController : StateMachine<PlayerController>
 	[SerializeField] public AudioClip gobHurt;
 	[SerializeField] public AudioClip spin;
 	[SerializeField] public AudioClip pitFall;
+	[SerializeField] public AudioClip gobSlide;
 
 	[Header("Spin Audio")]
 	[SerializeField] float spinVolume = 0.5f;
@@ -91,6 +92,12 @@ public class PlayerController : StateMachine<PlayerController>
 	[SerializeField] float spinPitchMax = 2.5f;
 	[Tooltip("Flight speed (as a fraction of launch power) at/above which the spin stays at full; below it eases off near the end of the flight.")]
 	[Range(0.05f, 1f)] [SerializeField] float spinFlightHold = 0.3f;
+
+	[Header("Sprites")]
+	[SerializeField] Sprite sprIdle;
+	[SerializeField] Sprite sprSpin;
+	[SerializeField] Sprite sprHitstun;
+	[SerializeField] Sprite sprLanding;
 
 	float _spinTimer;
 	AudioSource spinSource;
@@ -112,6 +119,9 @@ public class PlayerController : StateMachine<PlayerController>
 
 		Rigidbody.gravityScale = 0f;
 		Rigidbody.linearDamping = LinearDamping;
+
+		// Stay upright at all times — the spin is a sprite animation now, never a body rotation.
+		Rigidbody.freezeRotation = true;
 
 		// Register contacts while Kinematic (Idle / Dragging) so the player can be hit by — and
 		// collide with — static walls and Damage tiles mid-drag, not only dynamic enemies.
@@ -224,6 +234,27 @@ public class PlayerController : StateMachine<PlayerController>
 	/// <summary>Drag / braking spin: linear with intensity, peaking at full launch power.</summary>
 	public void SpinTick(float intensity)
 		=> Spin(MaxLaunchPower > 0f ? Mathf.Clamp01(intensity / MaxLaunchPower) : 0f);
+
+	/// <summary>
+	/// Normalised 0..1 spin intensity for the current state — the very value that drives the spin
+	/// sound's pitch / rate (launch power while dragging, flight speed while flying / braking).
+	/// The sprite animator reads this to advance the spin frames at a matching rate.
+	/// </summary>
+	public float CurrentSpinIntensity()
+	{
+		if (MaxLaunchPower <= 0f) return 0f;
+
+		if (Current is St_Pl_Dragging)
+			return Mathf.Clamp01(LaunchForce.magnitude / MaxLaunchPower);
+
+		if (Current is St_Pl_Flying)
+			return Mathf.Clamp01(Rigidbody.linearVelocity.magnitude / (MaxLaunchPower * spinFlightHold));
+
+		if (Current is St_Pl_Stopping)
+			return Mathf.Clamp01(Rigidbody.linearVelocity.magnitude / MaxLaunchPower);
+
+		return 0f;
+	}
 
 	/// <summary>Flight spin: stays at full while moving fast, easing off only once the speed drops
 	/// below spinFlightHold of the launch power — high at the start, dropping near the end.</summary>

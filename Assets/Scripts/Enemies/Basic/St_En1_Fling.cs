@@ -39,6 +39,14 @@ namespace hoZer
 		{
 			base.OnPhysics();
 
+			// Never lunge into a pit by ourselves — kill the velocity at the edge and settle.
+			if (Focus.PitAhead())
+			{
+				Focus.rigidbody.linearVelocity = Vector2.zero;
+				SetState<St_En1_Stopping>();
+				return;
+			}
+
 			// Bleed off speed so the lunge has a limited range; St_En1_Stopping finishes the settle.
 			Focus.rigidbody.linearVelocity = Vector2.Lerp(
 				Focus.rigidbody.linearVelocity,

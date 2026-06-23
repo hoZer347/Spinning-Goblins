@@ -17,7 +17,7 @@ namespace hoZer
 			
 			timeUntilDone.Reset(Focus.hitStunTime);
 			flashDuration.Reset(Focus.hurtFlashTime);
-			Focus.audioSource.PlayOneShot(Focus.gobHurt, .1f);
+			Focus.audioSource.PlayOneShot(Focus.gobHurt, .5f);
 		}
 
 		public override void OnUpdate()
