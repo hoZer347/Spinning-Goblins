@@ -61,6 +61,9 @@ namespace hoZer
 		float			damageReadyAt;
 		EnemyHealthBar	healthBar;
 
+		/// <summary>Remaining hit points — read by pit-kill scoring before the enemy drops in.</summary>
+		public int Health => health;
+
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
 		[SerializeField] public AudioClip			hitstunSound;
@@ -71,13 +74,24 @@ namespace hoZer
 
 		private void OnDestroy()
 		{
+			if (!Application.isPlaying) return;
+
 			EnemyController[] enemyController =
 				GameObject.FindObjectsByType<EnemyController>(
 					FindObjectsSortMode.None);
 
-			if (Application.isPlaying && enemyController.Length == 0)
-				SceneManager.LoadScene(FindAnyObjectByType<CutsceneManager>()
-					.NextScene);
+			if (enemyController.Length != 0) return;
+
+			// Optional cutscene-driven transition. Guarded so levels WITHOUT a CutsceneManager
+			// (those use AllEnemyDeadSceneTrans) don't NRE, and an unset / build-empty scene
+			// reference never calls SceneManager.LoadScene("") (the "invalid scene name" error).
+			CutsceneManager cutscene = FindAnyObjectByType<CutsceneManager>();
+			string next = cutscene != null && cutscene.NextScene != null
+				? cutscene.NextScene.ScenePath
+				: null;
+
+			if (!string.IsNullOrEmpty(next))
+				SceneManager.LoadScene(next);
 		}
 
 		private void OnCollisionEnter2D(Collision2D collision)
@@ -103,6 +117,7 @@ namespace hoZer
 			damageReadyAt = Time.time + damageCooldown;
 
 			PlayHit();
+			ScoreUI.Instance?.AddHazardDamage(1); // 20 per point of damage dealt
 			TakeDamage();
 		}
 
@@ -182,8 +197,8 @@ namespace hoZer
 				HurtByHazard();
 		}
 
-		// True if a Damage wall is within this step's travel, so we react before bouncing off it.
-		private bool DamageWallAhead()
+		// True if a collider on `mask` is within this step's travel along the current velocity.
+		private bool Ahead(int mask)
 		{
 			if (rigidbody == null || collider == null)
 				return false;
@@ -192,7 +207,7 @@ namespace hoZer
 			float   speed    = velocity.magnitude;
 
 			if (speed < 0.01f)
-				return false; // not sliding — nothing to pre-empt
+				return false; // not moving — nothing to pre-empt
 
 			float distance = speed * Time.fixedDeltaTime + WallCastSkin;
 
@@ -201,8 +216,15 @@ namespace hoZer
 				collider.bounds.extents.x,
 				velocity / speed,
 				distance,
-				LayerMask.GetMask("Damage")).collider != null;
+				mask).collider != null;
 		}
+
+		// A Damage wall ahead — react before bouncing off it.
+		private bool DamageWallAhead() => Ahead(LayerMask.GetMask("Damage"));
+
+		// A pit ahead — used to stop a self-propelled lunge before it carries the enemy into a pit
+		// by itself (it can still be knocked in, since that's not driven by this check).
+		public bool PitAhead() => Ahead(LayerMask.GetMask("Pits"));
 
 		protected virtual bool PlayerInRange() =>
 			Vector2.Distance(

@@ -18,6 +18,9 @@ public class St_Pl_Flying : St_Pl_Base
         Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
         Focus.Rigidbody.linearDamping = 0f; // we apply all deceleration manually in OnPhysics
         Focus.Rigidbody.AddForce(Focus.LaunchForce, ForceMode2D.Impulse);
+
+        // New flight: restart the consecutive-hit combo (10, 20, 30, ... per hit this flight).
+        ScoreUI.Instance?.ResetFlyingCombo();
     }
 
     public override void OnUpdate()

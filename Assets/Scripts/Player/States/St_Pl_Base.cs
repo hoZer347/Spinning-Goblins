@@ -34,6 +34,7 @@ public abstract class St_Pl_Base : State<PlayerController>
 				{
 					Focus.ShakeCamera();
 					enemyController.TakeDamage();   // spend a dot; hitstun on survive, die when depleted
+					ScoreUI.Instance?.AddFlyingHit();   // 10, then +10 per consecutive hit this flight
 					Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 				}
 			};
@@ -43,7 +44,7 @@ public abstract class St_Pl_Base : State<PlayerController>
 				|| Focus.Current is St_Pl_Idle)
 			{
 				Focus.ShakeCamera();
-				Focus.audioSource.PlayOneShot(Focus.gobHurt, .2f);
+				Focus.audioSource.PlayOneShot(Focus.gobHurt, .5f);
 				Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 
 				Vector3 direction =

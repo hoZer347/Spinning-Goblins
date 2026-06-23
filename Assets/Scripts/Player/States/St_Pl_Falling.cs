@@ -38,9 +38,14 @@ public class St_Pl_Falling : St_Pl_Base
 
         if (t >= 1f)
         {
-            // For now a fall just sends the player home (RespawnAtStart restores scale/rotation).
+            // A fall sends the player home and costs a health dot — an empty bar means death
+            // (→ scene reset). RespawnAtStart restores scale/rotation.
             Focus.RespawnAtStart();
-            SetState<St_Pl_Idle>();
+
+            if (Focus.SpendHealth())
+                SetState<St_Pl_OnDeath>();
+            else
+                SetState<St_Pl_Idle>();
         }
     }
 }
