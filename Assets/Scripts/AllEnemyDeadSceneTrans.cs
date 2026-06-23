@@ -21,19 +21,23 @@ public class AllEnemyDeadSceneTrans : MonoBehaviour
 		{
 			if (duration.Tick())
 			{
-				if (GameManager.Instance != null)
+				// An explicitly assigned nextScene wins: this transition points straight at the
+				// next scene, self-contained. Only when no scene is assigned do we defer to the
+				// GameManager, which drives endless-mode level progression.
+				string scene = nextScene != null ? nextScene.ScenePath : null;
+				if (!string.IsNullOrEmpty(scene))
+				{
+					SceneManager.LoadScene(scene);
+				}
+				else if (GameManager.Instance != null)
 				{
 					GameManager.Instance.LoadNextLevel();
 				}
 				else
 				{
-					string scene = nextScene != null ? nextScene.ScenePath : null;
-					if (string.IsNullOrEmpty(scene))
-						Debug.LogError("[AllEnemyDeadSceneTrans] nextScene resolved to an empty path — " +
-							"re-assign it in the Inspector and confirm the target scene is in Build Settings. " +
-							"(Tymski SceneReference can serialize empty into a build.)", this);
-					else
-						SceneManager.LoadScene(scene);
+					Debug.LogError("[AllEnemyDeadSceneTrans] nextScene resolved to an empty path — " +
+						"re-assign it in the Inspector and confirm the target scene is in Build Settings. " +
+						"(Tymski SceneReference can serialize empty into a build.)", this);
 				}
 			}
 		}

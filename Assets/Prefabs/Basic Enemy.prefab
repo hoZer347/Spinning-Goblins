@@ -52,7 +52,7 @@ MonoBehaviour:
   _startState:
     _state:
       rid: 7327565970620022852
-  maxSavedStates: 27
+  maxSavedStates: 0
   rigidbody: {fileID: 8951117970628985409}
   collider: {fileID: 3051321341369431219}
   spriteRenderer: {fileID: 6770229808479700758}
@@ -66,6 +66,7 @@ MonoBehaviour:
   wanderTimeMin: 1
   wanderTimeMax: 3
   hitstunDuration: 0.3
+  hitstunKnockback: 18
   stopFriction: 5
   pauseDuration: 1
   approachSpeed: 3
@@ -78,6 +79,7 @@ MonoBehaviour:
   flingDirection: {x: 0, y: 0}
   flingReadyAt: 0
   fallingDuration: 1
+  spawnCost: 1
   maxHealth: 3
   damageCooldown: 0.25
   healthBarHeight: 0.6
@@ -388,3 +390,4 @@ MonoBehaviour:
   ImpactSpeedBoost: 1.4
   ScaleSmoothing: 16
   MoveEpsilon: 0.0015
+  DirectionHysteresis: 12

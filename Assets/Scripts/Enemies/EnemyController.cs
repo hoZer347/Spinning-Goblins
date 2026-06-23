@@ -118,6 +118,12 @@ namespace hoZer
 				HurtByHazard();              // hit spikes mid-hitstun
 			else if (layer == LayerMask.NameToLayer("Obstacle"))
 				PlayHit();                   // bounced off a wall mid-hitstun
+
+			// Knocked into another enemy: pass the hit on. It takes damage + hitstun and, carried by
+			// the same collision impulse, can knock into the next enemy — a chain reaction.
+			EnemyController other = collision.gameObject.GetComponent<EnemyController>();
+			if (other != null)
+				other.HitByEnemy();
 		}
 
 		// Spike/hazard contact: play the impact and spend one health dot. The damage cooldown lives
@@ -130,6 +136,21 @@ namespace hoZer
 
 			PlayHit();
 			ScoreUI.Instance?.AddHazardDamage(1); // 20 per point of damage dealt
+			TakeDamage();
+		}
+
+		/// <summary>
+		/// A knocked enemy slammed into us — take a hit and join the chain. Guarded so an enemy
+		/// already reeling / dying isn't re-hit: two knocked enemies can't ping-pong damage forever,
+		/// and each fresh enemy the chain reaches is hit exactly once. Shares the hazard cooldown.
+		/// </summary>
+		public void HitByEnemy()
+		{
+			if (Current is St_En1_Hitstun || Current is St_En1_Die || Current is St_En1_Falling) return;
+			if (Time.time < damageReadyAt) return;
+			damageReadyAt = Time.time + damageCooldown;
+
+			PlayHit();
 			TakeDamage();
 		}
 

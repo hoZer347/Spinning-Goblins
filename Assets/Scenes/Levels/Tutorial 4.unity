@@ -18046,6 +18046,22 @@ PrefabInstance:
       propertyPath: wanderDistanceMin
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
+      propertyPath: _startState._state
+      value: 7327566037173928006
+      objectReference: {fileID: 0}
+    - target: {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
+      propertyPath: 'managedReferences[7327566037173928006]'
+      value: Assembly-CSharp hoZer.St_En1_Sleeping
+      objectReference: {fileID: 0}
+    - target: {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
+      propertyPath: managedReferences[7327566037173928006].gameObject
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
+      propertyPath: managedReferences[7327566037173928006].stateMachine
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7417291820908702755, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
       propertyPath: m_Name
       value: Basic
