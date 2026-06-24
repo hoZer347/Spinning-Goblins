@@ -376,12 +376,18 @@ MonoBehaviour:
     sceneAsset: {fileID: 102900000, guid: 1eef6a9333bbd7c48be2206efca267e0, type: 3}
     scenePath: Assets/Scenes/Menu/Outro Cutscene.unity
   LevelScenes:
-  - sceneAsset: {fileID: 0}
-    scenePath: 
-  - sceneAsset: {fileID: 0}
-    scenePath: 
-  - sceneAsset: {fileID: 0}
-    scenePath: 
+  - sceneAsset: {fileID: 102900000, guid: 656d3f94f9a3d724bb5b944bd66cae92, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 1.unity
+  - sceneAsset: {fileID: 102900000, guid: 2513ed9c161b5d84c92e992172cea05e, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 2.unity
+  - sceneAsset: {fileID: 102900000, guid: 379b57d1fc254c84d9694815812cb680, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 3.unity
+  - sceneAsset: {fileID: 102900000, guid: f4f2d4c3f4e61224da8a68e9089bdd49, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 4.unity
+  - sceneAsset: {fileID: 102900000, guid: 5d6bc45732bf9cf4f8087a80341ea76d, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 5.unity
+  - sceneAsset: {fileID: 102900000, guid: 9edeff9799c4b9242a94ea2d4c659474, type: 3}
+    scenePath: Assets/Scenes/Levels/Tutorial 6.unity
   EndlessLevelScenes:
   - sceneAsset: {fileID: 102900000, guid: 517603749d311814f9523ce387ae9215, type: 3}
     scenePath: Assets/Scenes/Levels/Spikes.unity
@@ -389,8 +395,8 @@ MonoBehaviour:
   Fader: {fileID: 0}
   Swiper: {fileID: 3655777556879506215}
   PostTutorialScene:
-    sceneAsset: {fileID: 0}
-    scenePath: 
+    sceneAsset: {fileID: 102900000, guid: 43453b72e1498c3469a31582d0dd801b, type: 3}
+    scenePath: Assets/Scenes/Battle/Battle 1.unity
   EnemyPool:
   - {fileID: 4759638233471975639, guid: 025fd7cfe4c44ea45916aa87c68a7248, type: 3}
   BaseEnemyBudget: 3

@@ -21,11 +21,17 @@ public abstract class St_Pl_Base : State<PlayerController>
 		EnemyController enemyController = other.GetComponent<EnemyController>();
 		if (enemyController != null)
 		{
+			// A reeling, dying or falling enemy is harmless — it can never damage the player, whether
+			// the player is flying or resting. Only a live, active enemy is a threat.
+			bool enemyHarmless = enemyController.Current is St_En1_Hitstun
+				|| enemyController.Current is St_En1_Death
+				|| enemyController.Current is St_En1_Falling;
+
 			if (Focus.Current is St_Pl_Flying)
 			{
 				// A flinging enemy's lunge beats the player's flight: the player gets hurt instead
-				// of the enemy. Any other time, the flying player damages the enemy as usual.
-				if (enemyController.Current is St_En1_Fling)
+				// of the enemy. Any other time (incl. a harmless enemy) the player damages it instead.
+				if (!enemyHarmless && enemyController.Current is St_En1_Fling)
 				{
 					Vector2 c = Focus.Collider.bounds.center;
 					OnDamage(c - (Vector2)enemyController.transform.position);
@@ -34,14 +40,19 @@ public abstract class St_Pl_Base : State<PlayerController>
 				{
 					Focus.ShakeCamera();
 					enemyController.TakeDamage();   // spend a dot; hitstun on survive, die when depleted
-					ScoreUI.Instance?.AddFlyingHit();   // 10, then +10 per consecutive hit this flight
+					// 10, then +10 per consecutive hit this flight — popped at the point of contact.
+					Vector2 contact = enemyController.collider != null
+						? enemyController.collider.ClosestPoint(Focus.Collider.bounds.center)
+						: (Vector2)enemyController.transform.position;
+					ScoreUI.Instance?.AddFlyingHit(contact);
 					Focus.audioSource.PlayOneShot(Focus.hit, .3f);
 				}
 			};
 
-			if (Focus.Current is St_Pl_Stopping
+			if (!enemyHarmless &&
+				(Focus.Current is St_Pl_Stopping
 				|| Focus.Current is St_Pl_Dragging
-				|| Focus.Current is St_Pl_Idle)
+				|| Focus.Current is St_Pl_Idle))
 			{
 				Focus.ShakeCamera();
 				Focus.audioSource.PlayOneShot(Focus.gobHurt, .5f);
@@ -59,8 +70,15 @@ public abstract class St_Pl_Base : State<PlayerController>
 				Focus.Rigidbody.bodyType = RigidbodyType2D.Dynamic;
 				Focus.Rigidbody.linearVelocity = -direction * Focus.HurtBounceForce;
 
-				// Pause the enemy briefly so it stops shoving the player while we recover.
-				enemyController.SetState<St_En1_Pause>();
+				// Pause the enemy briefly so it stops shoving the player while we recover — but never
+				// yank one out of its hit/death/fall sequence. Pausing a 0-HP enemy mid-hitstun (or a
+				// flashing corpse) would skip the Hitstun→Death routing and resurrect it into the
+				// wander/approach loop, alive at 0 HP. Only pause an enemy that's still in the fight.
+				if (enemyController.Health > 0
+					&& !(enemyController.Current is St_En1_Hitstun
+						|| enemyController.Current is St_En1_Death
+						|| enemyController.Current is St_En1_Falling))
+					enemyController.SetState<St_En1_Pause>();
 
 				// Spend a dot if the player uses a health bar; an empty bar means death.
 				if (Focus.SpendHealth())

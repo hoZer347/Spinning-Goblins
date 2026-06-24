@@ -129,7 +129,7 @@ public class EnemySpriteAnimator : MonoBehaviour
     {
         if (state is St_En1_Sleeping) return Use(SleepingFrames);
         if (state is St_En1_Falling)  return Use(FallingFrames, SpinFrames);
-        if (state is St_En1_Hitstun)  return Use(SpinFrames); // spin ONLY as the just-got-hit reaction
+        if (state is St_En1_Hitstun || state is St_En1_Death) return Use(SpinFrames); // spin through the hit + death
         if (state is St_En1_Wander || state is St_En1_Approach
             || state is St_En1_Fling || state is St_En1_Stopping)
             return WalkFrames();

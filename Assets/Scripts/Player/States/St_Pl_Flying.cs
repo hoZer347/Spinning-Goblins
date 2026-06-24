@@ -25,8 +25,8 @@ public class St_Pl_Flying : St_Pl_Base
 
     public override void OnUpdate()
     {
-        // A press brakes the flight.
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        // A press brakes the flight (off-screen clicks are ignored).
+        if (CursorManager.PointerInWindow && Mouse.current.leftButton.wasPressedThisFrame)
         {
             SetState<St_Pl_Stopping>();
             return;

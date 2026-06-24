@@ -153,6 +153,16 @@ public class PlayerController : StateMachine<PlayerController>
 		spinSource = gameObject.AddComponent<AudioSource>();
 		spinSource.playOnAwake = false;
 
+		// The serialized drag-line material can be stripped from a build (the line renders magenta),
+		// so assign a build-safe Sprites/Default material at runtime. The line's colour comes from
+		// the per-vertex start/end colours set in St_Pl_Dragging, so this only swaps the shader.
+		Shader lineShader = Shader.Find("Sprites/Default");
+		if (lineShader != null)
+		{
+			if (DragLine != null)       DragLine.material       = new Material(lineShader);
+			if (DragLineShadow != null) DragLineShadow.material = new Material(lineShader);
+		}
+
 		if (UseHealthBar)
 		{
 			_health = MaxHealth;

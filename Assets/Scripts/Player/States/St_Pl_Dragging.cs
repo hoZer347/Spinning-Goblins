@@ -11,13 +11,17 @@ public class St_Pl_Dragging : St_Pl_Base
     private const int MaxLineBounces = 1;
 
     private Vector2 _origin;
+    private Vector2 _virtualScreen; // unclamped virtual cursor; the screen edge can't cap the pull
+    private Vector2 _lastMouse;     // real cursor position last frame, to measure movement
     Duration _wooshSFXDelay;
 
     public override void OnEnter(State lastState)
     {
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
-        _origin = Focus.transform.position;
+        _origin        = Focus.transform.position;
+        _lastMouse     = Mouse.current.position.ReadValue();
+        _virtualScreen = _lastMouse;
 
         string spriteLayer = Focus.Sprite != null ? Focus.Sprite.sortingLayerName : "Default";
         int    spriteOrder = Focus.Sprite != null ? Focus.Sprite.sortingOrder     : 0;
@@ -55,14 +59,33 @@ public class St_Pl_Dragging : St_Pl_Base
 
     public override void OnUpdate()
     {
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        // Track the cursor through a VIRTUAL position the screen edge can't cap. While the real
+        // cursor is on-screen this just follows it (normal pull-back); once it's pinned at the edge
+        // (warped below) the movement past the edge still accumulates here, so the pull keeps growing.
+        Vector2 realMouse = Mouse.current.position.ReadValue();
+        _virtualScreen += realMouse - _lastMouse;
+        _lastMouse = realMouse;
+
+        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(_virtualScreen);
         Vector2 dragVec = mouseWorld - Focus.DragClickPosition;
 
         if (dragVec.magnitude > Focus.MaxDragDistance)
         {
             dragVec = dragVec.normalized * Focus.MaxDragDistance;
-            Vector2 clampedScreen = Camera.main.WorldToScreenPoint(Focus.DragClickPosition + dragVec);
-            Mouse.current.WarpCursorPosition(clampedScreen);
+            _virtualScreen = Camera.main.WorldToScreenPoint(Focus.DragClickPosition + dragVec);
+        }
+
+        // Keep the real cursor inside the window so it never reappears off-screen — the movement
+        // past the edge is already folded into _virtualScreen above, so the pull doesn't lose it.
+        // WebGL can't warp the OS cursor (and the browser already clamps the mouse to the canvas),
+        // so skip it there; the pull-back still works, it just won't keep charging past the edge.
+        Vector2 onScreen = new Vector2(
+            Mathf.Clamp(realMouse.x, 0f, Screen.width),
+            Mathf.Clamp(realMouse.y, 0f, Screen.height));
+        if (onScreen != realMouse && Application.platform != RuntimePlatform.WebGLPlayer)
+        {
+            Mouse.current.WarpCursorPosition(onScreen);
+            _lastMouse = onScreen;
         }
 
         // Launch power comes from the FULL pull, so compression and the wall / screen clamping
@@ -125,6 +148,9 @@ public class St_Pl_Dragging : St_Pl_Base
 
     public override void OnExit(State nextState)
     {
+        // Release the cursor — it's free to roam (and leave the window) again outside the drag.
+        Cursor.lockState = CursorLockMode.None;
+
         // Launch from where the body actually is (the stretched position) instead of snapping
         // back to the drag origin — the flight begins from where the player starts moving.
         if (Focus.DragLine != null)       Focus.DragLine.enabled       = false;

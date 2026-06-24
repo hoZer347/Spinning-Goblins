@@ -39,7 +39,12 @@ namespace hoZer
             base.OnUpdate();
 
             if (duration.Tick())
-                SetState<St_En1_Stopping>();
+            {
+                if (Focus.Health <= 0)
+                    SetState<St_En1_Death>();    // dead: skid done, now flash out and destroy
+                else
+                    SetState<St_En1_Stopping>(); // survived: settle back into the fight
+            }
         }
     };
 };

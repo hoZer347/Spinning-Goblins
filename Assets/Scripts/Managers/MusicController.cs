@@ -39,6 +39,7 @@ public class MusicController : MonoBehaviour
         }
 
         Instance = this;
+        transform.SetParent(null);   // be a root object so DontDestroyOnLoad reliably persists us
         DontDestroyOnLoad(gameObject);
 
         _introSource     = CreateSource();

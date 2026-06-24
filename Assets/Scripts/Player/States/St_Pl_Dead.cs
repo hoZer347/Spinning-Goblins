@@ -21,7 +21,7 @@ public class St_Pl_Dead : St_Pl_Base
     {
         if (_respawning) return;
 
-        bool clicked = Mouse.current.leftButton.wasPressedThisFrame;
+        bool clicked = CursorManager.PointerInWindow && Mouse.current.leftButton.wasPressedThisFrame;
         bool spaced = Keyboard.current.spaceKey.wasPressedThisFrame;
 
         if (clicked || spaced) Respawn();

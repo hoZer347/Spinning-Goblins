@@ -278,17 +278,29 @@ public class GameManager : StateMachine<GameManager>
         }
         else
         {
-            Debug.Log($"[GameManager] LoadNextLevel → all {LevelScenes.Length} tutorial levels done, starting endless.");
             TutorialComplete = true;
-            StartEndlessMode();
+
+            // Tutorials are done. Hand off to the designated post-tutorial scene (e.g. Battle 1)
+            // when one is assigned; only fall back to endless mode if it isn't.
+            if (PostTutorialScene != null && !string.IsNullOrEmpty(PostTutorialScene.ScenePath))
+            {
+                Debug.Log($"[GameManager] LoadNextLevel → tutorials done, loading PostTutorialScene: {PostTutorialScene.ScenePath}");
+                LoadScene(PostTutorialScene);
+            }
+            else
+            {
+                Debug.Log($"[GameManager] LoadNextLevel → all {LevelScenes.Length} tutorial levels done, no PostTutorialScene set — starting endless.");
+                StartEndlessMode();
+            }
         }
     }
 
     public void RestartLevel() => LoadLevel(CurrentLevelIndex);
 
     /// <summary>
-    /// Called by the death screen. Skips tutorial if it was already completed this session.
-    /// Resets run stats but preserves TutorialComplete.
+    /// Called by the death screen. Resets run stats but preserves TutorialComplete.
+    /// Dying in the post-tutorial scene (Battle 1) reloads it in place; otherwise it skips the
+    /// tutorial if it was already completed this session.
     /// </summary>
     public void RestartGame(PlayerController player)
     {
@@ -296,6 +308,17 @@ public class GameManager : StateMachine<GameManager>
         EnemiesKilled        = 0;
         EndlessLevelsCleared = 0;
         player.CurrentHealth = player.MaxHealth;
+
+        // Dying in Battle 1 (the post-tutorial scene) just restarts Battle 1 — in both editor and
+        // build — rather than dropping into endless mode or replaying the tutorial.
+        if (PostTutorialScene != null
+            && !string.IsNullOrEmpty(PostTutorialScene.ScenePath)
+            && SceneManager.GetActiveScene().path == PostTutorialScene.ScenePath)
+        {
+            IsEndlessMode = false; // Battle 1 has its own placed enemies; don't endless-spawn on reload.
+            LoadScene(PostTutorialScene);
+            return;
+        }
 
         if (TutorialComplete)
             StartEndlessMode();

@@ -10,6 +10,15 @@ public class ScoreUI : MonoBehaviour
 {
 	public static ScoreUI Instance { get; private set; }
 
+	[Tooltip("Font for the floating '+score' popups. Assign Minecraft.ttf (the legacy Font, not the SDF asset).")]
+	[SerializeField] Font popupFont;
+
+	// Popup colours per event type — picked here so the scoring calls stay terse.
+	static readonly Color HitColor    = new Color(1f,    1f,    1f   ); // flying / chain hits — white
+	static readonly Color HazardColor = new Color(1f,    0.55f, 0.2f ); // knocked into spikes — orange
+	static readonly Color KillColor   = new Color(1f,    0.85f, 0.2f ); // enemy death        — gold
+	static readonly Color PitColor    = new Color(0.45f, 0.8f,  1f   ); // pit death          — cyan
+
 	TextMeshProUGUI scoreText;
 	int _score;
 	int _flyingCombo; // hits landed during the current St_Pl_Flying state
@@ -62,6 +71,13 @@ public class ScoreUI : MonoBehaviour
 		Refresh();
 	}
 
+	/// <summary>Tally the score and pop a floating "+score" number at a world point of contact.</summary>
+	void AddAt(int score, Vector3 at, Color color)
+	{
+		Add(score);
+		FloatingScorePopup.Spawn(score, at, popupFont, color);
+	}
+
 	/// <summary>Snap to the pulse scale; Update eases it back, giving a pop on each Add.</summary>
 	private void Pulse() => transform.localScale = _baseScale * PulseScale;
 
@@ -75,15 +91,18 @@ public class ScoreUI : MonoBehaviour
 	/// <summary>Start of a flight: restart the consecutive-hit combo.</summary>
 	public void ResetFlyingCombo() => _flyingCombo = 0;
 
-	/// <summary>A flying-player hit on an enemy: 10, then +10 per consecutive hit this flight.</summary>
-	public void AddFlyingHit() => Add(++_flyingCombo * 10);
+	/// <summary>
+	/// A flying-player hit on an enemy — or one enemy knocked into another — advances the same combo:
+	/// 10, then +10 per consecutive hit this flight (10 + 20 + 30 + ...).
+	/// </summary>
+	public void AddFlyingHit(Vector3 at) => AddAt(++_flyingCombo * 10, at, HitColor);
 
 	/// <summary>An enemy knocked into the damage layer: 20 per point of damage dealt.</summary>
-	public void AddHazardDamage(int damage) => Add(20 * damage);
+	public void AddHazardDamage(int damage, Vector3 at) => AddAt(20 * damage, at, HazardColor);
 
 	/// <summary>A normal enemy kill.</summary>
-	public void AddKill() => Add(100);
+	public void AddKill(Vector3 at) => AddAt(100, at, KillColor);
 
 	/// <summary>A kill by knockback into a pit: 100 + 20 per remaining HP.</summary>
-	public void AddPitKill(int remainingHealth) => Add(100 + 20 * remainingHealth);
+	public void AddPitKill(int remainingHealth, Vector3 at) => AddAt(100 + 20 * remainingHealth, at, PitColor);
 }

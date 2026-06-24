@@ -9,6 +9,10 @@ public class CursorManager : MonoBehaviour
 {
     public static CursorManager Instance { get; private set; }
 
+    /// <summary>True while the real OS cursor is inside the game window. Gameplay ignores mouse
+    /// input when this is false, so clicks made off-screen don't reach the game.</summary>
+    public static bool PointerInWindow { get; private set; } = true;
+
     [Header("Sprites")]
     public Sprite NormalSprite;
     public Sprite DragSprite;
@@ -53,6 +57,7 @@ public class CursorManager : MonoBehaviour
     {
         if (!_initialized) return;
         Cursor.visible = true;
+        PointerInWindow = true; // don't leave gameplay input blocked if we're disabled
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -78,6 +83,11 @@ public class CursorManager : MonoBehaviour
         Vector2 mouseScreen = Mouse.current.position.ReadValue();
         bool    isClicking  = Mouse.current.leftButton.isPressed;
 
+        // The real cursor is free to leave the window; track whether it's inside so gameplay can
+        // ignore clicks made off-screen.
+        PointerInWindow = mouseScreen.x >= 0f && mouseScreen.x <= Screen.width
+                       && mouseScreen.y >= 0f && mouseScreen.y <= Screen.height;
+
         var  state      = GameManager.Instance?.CurrentSceneState;
         bool isUIScene  = state == GameManager.SceneState.MainMenu
                        || state == GameManager.SceneState.Cutscene;
@@ -102,8 +112,13 @@ public class CursorManager : MonoBehaviour
             }
             else
             {
+                // Snap the OS cursor to where the drag left it. WebGL can't warp the cursor, so skip
+                // it there (the browser owns the cursor anyway) to avoid the unsupported call.
                 if (_wasDragging)
-                    Mouse.current.WarpCursorPosition(_screenPos);
+                {
+                    if (Application.platform != RuntimePlatform.WebGLPlayer)
+                        Mouse.current.WarpCursorPosition(_screenPos);
+                }
                 else
                     _screenPos = mouseScreen;
 
@@ -115,8 +130,15 @@ public class CursorManager : MonoBehaviour
 
         Cursor.visible = false;
 
-        float hw = _rect.rect.width  * 0.5f;
-        float hh = _rect.rect.height * 0.5f;
+        // Keep the cursor sprite on-screen and always visible. The clamp is in SCREEN PIXELS — the
+        // rect's local size scaled by lossyScale — so it's correct under any CanvasScaler / build
+        // resolution. (The old clamp mixed canvas-unit rect sizes with pixel Screen dimensions, so
+        // it inverted off the reference resolution and made the cursor vanish at the top/bottom.)
+        // The real OS cursor still roams freely off-screen; PointerInWindow gates input, not this.
+        _image.enabled = true;
+
+        float hw = _rect.rect.width  * _rect.lossyScale.x * 0.5f;
+        float hh = _rect.rect.height * _rect.lossyScale.y * 0.5f;
         _screenPos.x = Mathf.Clamp(_screenPos.x, hw, Screen.width  - hw);
         _screenPos.y = Mathf.Clamp(_screenPos.y, hh, Screen.height - hh);
 

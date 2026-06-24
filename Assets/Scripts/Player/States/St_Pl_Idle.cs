@@ -15,7 +15,7 @@ public class St_Pl_Idle : St_Pl_Base
 
         // Only chain immediately if the previous state was Stopping (held through a stop).
         // Any other entry (first spawn, scene load, cutscene) requires a fresh click.
-        if (lastState is St_Pl_Stopping && Mouse.current.leftButton.isPressed)
+        if (lastState is St_Pl_Stopping && CursorManager.PointerInWindow && Mouse.current.leftButton.isPressed)
         {
             Focus.DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             SetState<St_Pl_Dragging>();
@@ -32,8 +32,8 @@ public class St_Pl_Idle : St_Pl_Base
         }
 
         // Otherwise a fresh press begins a pull. Keyed on the press edge (not the held button)
-        // so a click carried over from another state can't auto-drag.
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        // so a click carried over from another state can't auto-drag. Off-screen clicks are ignored.
+        if (CursorManager.PointerInWindow && Mouse.current.leftButton.wasPressedThisFrame)
         {
             Focus.DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             SetState<St_Pl_Dragging>();

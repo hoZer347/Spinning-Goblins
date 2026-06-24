@@ -16,7 +16,7 @@ namespace hoZer
 			base.OnEnter(lastState);
 
 			// Pit kill: 100 + 20 per HP the enemy still had when it dropped in.
-			ScoreUI.Instance?.AddPitKill(Focus.Health);
+			ScoreUI.Instance?.AddPitKill(Focus.Health, Focus.transform.position);
 
 			originalScale = Focus.transform.localScale;
 			originalPosition = Focus.transform.position;

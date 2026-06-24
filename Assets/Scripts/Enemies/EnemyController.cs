@@ -131,7 +131,7 @@ namespace hoZer
 			damageReadyAt = Time.time + damageCooldown;
 
 			PlayHit();
-			ScoreUI.Instance?.AddHazardDamage(1); // 20 per point of damage dealt
+			ScoreUI.Instance?.AddHazardDamage(1, transform.position); // 20 per point of damage dealt
 			TakeDamage();
 		}
 
@@ -142,11 +142,14 @@ namespace hoZer
 		/// </summary>
 		public void HitByEnemy()
 		{
-			if (Current is St_En1_Hitstun || Current is St_En1_Die || Current is St_En1_Falling) return;
+			if (Current is St_En1_Hitstun || Current is St_En1_Death || Current is St_En1_Falling) return;
 			if (Time.time < damageReadyAt) return;
 			damageReadyAt = Time.time + damageCooldown;
 
 			PlayHit();
+			// A knocked enemy slamming into this one scores like a player bounce, feeding the SAME
+			// flying combo — so a chain reaction climbs 10 + 20 + 30 + 40 ... down the line.
+			ScoreUI.Instance?.AddFlyingHit(transform.position);
 			TakeDamage();
 		}
 
@@ -157,15 +160,14 @@ namespace hoZer
 		/// </summary>
 		public void TakeDamage(int amount = 1)
 		{
-			if (Current is St_En1_Die || Current is St_En1_Falling) return;
+			if (Current is St_En1_Death || Current is St_En1_Falling) return;
 
 			health = Mathf.Max(0, health - amount);
 			if (healthBar != null) healthBar.SetHealth(health);
 
-			if (health <= 0)
-				SetState<St_En1_Die>();
-			else
-				SetState<St_En1_Hitstun>();
+			// Dead or alive, a hit knocks them into the slide. St_En1_Hitstun routes a dead enemy on
+			// to St_En1_Death (flash + destroy) when the slide settles, so corpses skid before they go.
+			SetState<St_En1_Hitstun>();
 		}
 
 		// Plays the shared hit clip (it lives on the player) on a throwaway source via
@@ -217,7 +219,7 @@ namespace hoZer
 		{
 			// Drop into a pit only once the whole collider is inside it — the body slides past the
 			// edge first. Runs in any moving state, but not while already dying / falling.
-			if (!(Current is St_En1_Falling || Current is St_En1_Die) && IsFullyInsidePit())
+			if (!(Current is St_En1_Falling || Current is St_En1_Death) && IsFullyInsidePit())
 			{
 				SetState<St_En1_Falling>();
 				return;

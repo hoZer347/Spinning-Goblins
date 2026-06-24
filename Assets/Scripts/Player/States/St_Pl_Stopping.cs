@@ -38,7 +38,7 @@ namespace hoZer
 			// A *fresh* press cancels the stop into a new pull (or a pit drop). Reacting to the
 			// press edge rather than the held button is what stops the click that began braking
 			// from instantly turning into a drag.
-			if (Mouse.current.leftButton.wasPressedThisFrame)
+			if (CursorManager.PointerInWindow && Mouse.current.leftButton.wasPressedThisFrame)
 			{
 				Focus.DragClickPosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
 				SetState<St_Pl_Dragging>();
