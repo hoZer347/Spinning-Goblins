@@ -61,6 +61,7 @@ namespace hoZer
 
 		int				health;
 		float			damageReadyAt;
+		Vector2			_prevCenter;     // collider centre last physics step, for the swept pit-crossing test
 		EnemyHealthBar	healthBar;
 
 		/// <summary>Remaining hit points — read by pit-kill scoring before the enemy drops in.</summary>
@@ -114,13 +115,21 @@ namespace hoZer
 			if (Current is St_En1_Hitstun)
 			{
 				// gameObject.layer is a layer INDEX; LayerMask.NameToLayer compares indices.
-				// Pits are handled by IsFullyInsidePit in OnPhysics, so only Damage / walls here.
+				// Pit crossings are handled in OnPhysics, so this is mainly Damage / walls.
 				int layer = collision.gameObject.layer;
 
 				if (layer == LayerMask.NameToLayer("Damage"))
 					HurtByHazard();              // hit spikes mid-hitstun
 				else if (layer == LayerMask.NameToLayer("Obstacle"))
-					PlayHit();                   // bounced off a wall mid-hitstun
+				{
+					// A wall flush against a pit would bounce the enemy straight back out before its
+					// centre ever crossed the gap. If any part of the body is already over the pit when
+					// it hits the wall, let the pit win — drop in instead of bouncing off.
+					if (OverlapsPit())
+						SetState<St_En1_Falling>();
+					else
+						PlayHit();               // bounced off a wall mid-hitstun
+				}
 			}
 
 			// Knocked into another enemy: pass the hit on whether we're reeling (Hitstun) or skidding
@@ -214,20 +223,24 @@ namespace hoZer
 				rigidbody.freezeRotation = true;
 			};
 
-			// Slide over Pit tiles instead of bouncing off their solid edge, so the body can get
-			// fully inside before it drops in. The IsFullyInsidePit query ignores this exclusion.
+			// Slide over Pit tiles instead of bouncing off their solid edge, so the body can carry over
+			// the gap before it drops in. The pit queries (OverPit / OverlapsPit) ignore this exclusion.
 			if (collider != null)
 				collider.excludeLayers = collider.excludeLayers.value | LayerMask.GetMask("Pits");
 
 			health    = maxHealth;
 			healthBar = EnemyHealthBar.Create(transform, maxHealth, healthBarHeight);
+
+			_prevCenter = collider != null ? (Vector2)collider.bounds.center : (Vector2)transform.position;
 		}
 
 		protected override void OnPhysics()
 		{
-			// Drop into a pit only once the whole collider is inside it — the body slides past the
-			// edge first. Runs in any moving state, but not while already dying / falling.
-			if (!(Current is St_En1_Falling || Current is St_En1_Death) && IsFullyInsidePit())
+			// Drop into a pit once the body's CENTRE passes over it — not once it's fully inside. A pit
+			// thinner than the enemy can never wrap all four corners, so the old full-overlap test let a
+			// knocked enemy slide straight across it. Centre-crossing (with a swept check below) claims
+			// the enemy on any pit, however thin, the moment its middle is carried over the gap.
+			if (!(Current is St_En1_Falling || Current is St_En1_Death) && CenterCrossedPit())
 			{
 				SetState<St_En1_Falling>();
 				return;
@@ -237,6 +250,9 @@ namespace hoZer
 			// the Dynamic phase; Wander/Approach move via transform and carry no velocity here).
 			if ((Current is St_En1_Hitstun || Current is St_En1_Stopping || Current is St_En1_Fling) && DamageWallAhead())
 				HurtByHazard();
+
+			// Remember where the centre is so next step's swept test spans the gap it travelled.
+			if (collider != null) _prevCenter = collider.bounds.center;
 		}
 
 		// True if a collider on `mask` is within this step's travel along the current velocity.
@@ -289,6 +305,27 @@ namespace hoZer
 
 		private bool OverPit(Vector2 point) =>
 			Physics2D.OverlapPoint(point, LayerMask.GetMask("Pits")) != null;
+
+		// True when any part of the body (approximated by its bounds circle) is over a pit. Used to let
+		// a pit claim an enemy that hits a wall flush against it, instead of bouncing back out.
+		private bool OverlapsPit() =>
+			collider != null
+			&& Physics2D.OverlapCircle(collider.bounds.center, collider.bounds.extents.x, LayerMask.GetMask("Pits")) != null;
+
+		// True when the collider's centre is over a pit, OR swept across one since the last physics step.
+		// The swept Linecast catches a fast knockback that would otherwise tunnel its centre clean over
+		// a thin pit between FixedUpdates. Both queries ignore the collider's own Pit exclusion, so they
+		// still see the pit the body is set to slide over.
+		private bool CenterCrossedPit()
+		{
+			if (collider == null) return false;
+
+			int     pits   = LayerMask.GetMask("Pits");
+			Vector2 center = collider.bounds.center;
+
+			return OverPit(center)
+				|| Physics2D.Linecast(_prevCenter, center, pits).collider != null;
+		}
 
 		// Moves the enemy by `displacement`, but refuses a step that would walk it from clear
 		// ground onto a Pit or Damage tile (it can still be knocked onto them). Returns true if

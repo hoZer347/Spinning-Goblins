@@ -17,6 +17,7 @@ public class SceneSwiper : MonoBehaviour
 
     private RectTransform _rect;
     private bool _swipedIn;
+    private bool _animating;
 
     private void Awake()
     {
@@ -53,6 +54,15 @@ public class SceneSwiper : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
+    // Unity calls this whenever the rect's dimensions change — including a window / canvas resize.
+    // While idle (parked off-screen) the old offset may no longer clear the new bounds and leave a
+    // sliver of the cover showing, so re-park it. Skipped mid-swipe or while it's covering the screen.
+    private void OnRectTransformDimensionsChange()
+    {
+        if (_rect != null && !_swipedIn && !_animating)
+            Park();
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log($"[SceneSwiper] OnSceneLoaded '{scene.name}' — _swipedIn={_swipedIn}, pos={_rect.anchoredPosition}");
@@ -74,17 +84,20 @@ public class SceneSwiper : MonoBehaviour
     public IEnumerator SwipeIn()
     {
         _swipedIn = true;
+        _animating = true;
         float w = Width();
         _rect.anchoredPosition = new Vector2(w, 0f);
         Debug.Log($"[SceneSwiper] SwipeIn START — from ({w},0) to (0,0), duration={SwipeInDuration}, rect.width={_rect.rect.width}");
         Play(SwipeInSound);
         yield return Slide(w, 0f, SwipeInDuration);
+        _animating = false;
         Debug.Log($"[SceneSwiper] SwipeIn END — pos={_rect.anchoredPosition}");
     }
 
     public IEnumerator SwipeOut()
     {
         _swipedIn = false;
+        _animating = true;
         // Skip one frame so Time.unscaledDeltaTime doesn't include the scene-load spike,
         // which would cause Slide to complete instantly on the first iteration.
         yield return null;
@@ -95,6 +108,7 @@ public class SceneSwiper : MonoBehaviour
         yield return Slide(0f, -w, SwipeOutDuration);
         Debug.Log($"[SceneSwiper] SwipeOut END — pos={_rect.anchoredPosition}");
         Park();
+        _animating = false;
     }
 
     private void Play(AudioClip clip)

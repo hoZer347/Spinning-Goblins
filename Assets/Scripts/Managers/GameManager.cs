@@ -127,13 +127,7 @@ public class GameManager : StateMachine<GameManager>
             }
         }
 
-        if (FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None).Length == 0) return;
-        IsEndlessMode        = true;
-        CurrentSceneState    = SceneState.Endless;
-        CurrentEnemyBudget   = BaseEnemyBudget;
-        _sessionStartTime    = Time.time;
-        _levelStartTime      = Time.time;
-        SpawnEnemies();
+        // Anything else (e.g. Battle 1) runs on its own placed enemies / spawner — nothing to set up.
     }
 
     private void Awake()
@@ -155,14 +149,8 @@ public class GameManager : StateMachine<GameManager>
     // or the Play-time skip) — records the tutorial as done.
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (PostTutorialScene == null) return;
-
-        string target = PostTutorialScene.ScenePath;
-        if (string.IsNullOrEmpty(target)) return;
-
-        // Match on full path or scene name, so it works whether ScenePath is a path or a name.
-        if (scene.path == target ||
-            scene.name == System.IO.Path.GetFileNameWithoutExtension(target))
+        // Reaching any Battle scene means the tutorial is done — persist it for the build-only skip.
+        if (IsBattleScene(scene.path))
             TutorialProgress.Completed = true;
     }
 
@@ -172,10 +160,10 @@ public class GameManager : StateMachine<GameManager>
     /// </summary>
     public void StartGame()
     {
-        if (TutorialProgress.Completed
-            && PostTutorialScene != null
-            && !string.IsNullOrEmpty(PostTutorialScene.ScenePath))
-            LoadScene(PostTutorialScene);
+        // Skip the tutorial only in a real build (web / prod), and only once it's been completed.
+        // In the editor we always run the full Intro -> tutorial flow so it stays testable.
+        if (TutorialProgress.Completed && !Application.isEditor)
+            LoadRandomBattle(fade: true);
         else
             LoadIntro();
 
@@ -247,83 +235,80 @@ public class GameManager : StateMachine<GameManager>
     public void LoadMainMenu() { CurrentSceneState = SceneState.MainMenu;  RequestTransition(MainMenuScene); }
     public void LoadIntro()    { CurrentSceneState = SceneState.Cutscene;  RequestTransition(IntroScene);    }
     public void LoadOutro()    { CurrentSceneState = SceneState.Cutscene;  RequestTransition(OutroScene);    }
-    public void LoadScene(SceneReference scene) => RequestTransition(scene);
+    public void LoadScene(SceneReference scene)
+    {
+        // Any explicit hand-off to a Battle scene feeds the random rotation instead, so every entry
+        // point (tutorial end, cutscene NextScene, a stray reference) lands on a random Battle.
+        if (scene != null && IsBattleScene(scene.ScenePath))
+            LoadRandomBattle(fade: true);
+        else
+            RequestTransition(scene);
+    }
 
     public void LoadLevel(int index)
     {
         if (index < 0 || index >= LevelScenes.Length) return;
+
+        // A "level" slot pointing at a Battle scene also routes into the random rotation.
+        if (IsBattleScene(LevelScenes[index]?.ScenePath))
+        {
+            LoadRandomBattle(fade: true);
+            return;
+        }
+
         CurrentSceneState = SceneState.Tutorial;
         CurrentLevelIndex = index;
         RequestTransition(LevelScenes[index]);
     }
 
     /// <summary>
-    /// In tutorial mode: advances to the next tutorial level, or starts endless when done.
-    /// In endless mode: scores the cleared level and loads the next one.
+    /// Advances the flow based on the scene we're actually in: the post-tutorial arena (Battle 1)
+    /// reloads itself — it repeats forever — and a tutorial level advances to the next one (or hands
+    /// off to Battle 1 after the last). No endless mode, no reliance on a tracked index.
     /// </summary>
     public void LoadNextLevel()
     {
-        if (IsEndlessMode)
+        // While the player is dead, the death flow owns the reload — never advance the level
+        // (otherwise a "no enemies left" clear can race the death and skip you to a battle).
+        PlayerController player = FindAnyObjectByType<PlayerController>();
+        if (player != null && (player.Current is St_Pl_OnDeath || player.Current is St_Pl_Dead))
+            return;
+
+        string activePath = SceneManager.GetActiveScene().path;
+
+        // Clearing a Battle scene loads another random Battle — the endless arena rotation.
+        if (IsBattleScene(activePath))
         {
-            Debug.Log("[GameManager] LoadNextLevel → endless mode, advancing endless level.");
-            AdvanceEndlessLevel();
+            LoadRandomBattle(fade: true);
             return;
         }
 
-        int next = CurrentLevelIndex + 1;
-        if (next < LevelScenes.Length)
+        // A tutorial level advances to the next one, or hands off to a random Battle after the last.
+        int tut  = TutorialIndexOf(activePath);
+        int next = tut + 1;
+        if (tut >= 0 && next < LevelScenes.Length)
         {
-            Debug.Log($"[GameManager] LoadNextLevel → tutorial {CurrentLevelIndex} → {next}");
             LoadLevel(next);
         }
         else
         {
             TutorialComplete = true;
-
-            // Tutorials are done. Hand off to the designated post-tutorial scene (e.g. Battle 1)
-            // when one is assigned; only fall back to endless mode if it isn't.
-            if (PostTutorialScene != null && !string.IsNullOrEmpty(PostTutorialScene.ScenePath))
-            {
-                Debug.Log($"[GameManager] LoadNextLevel → tutorials done, loading PostTutorialScene: {PostTutorialScene.ScenePath}");
-                LoadScene(PostTutorialScene);
-            }
-            else
-            {
-                Debug.Log($"[GameManager] LoadNextLevel → all {LevelScenes.Length} tutorial levels done, no PostTutorialScene set — starting endless.");
-                StartEndlessMode();
-            }
+            LoadRandomBattle(fade: true);
         }
     }
 
-    public void RestartLevel() => LoadLevel(CurrentLevelIndex);
+    public void RestartLevel() => ReloadActiveScene();
 
     /// <summary>
-    /// Called by the death screen. Resets run stats but preserves TutorialComplete.
-    /// Dying in the post-tutorial scene (Battle 1) reloads it in place; otherwise it skips the
-    /// tutorial if it was already completed this session.
+    /// Called by the death screen. Resets run stats, then reloads the current scene in place — no
+    /// transition, no endless / tutorial routing (Battle 1 replays Battle 1).
     /// </summary>
     public void RestartGame(PlayerController player)
     {
         Score                = 0;
         EnemiesKilled        = 0;
         EndlessLevelsCleared = 0;
-        player.CurrentHealth = player.MaxHealth;
-
-        // Dying in Battle 1 (the post-tutorial scene) just restarts Battle 1 — in both editor and
-        // build — rather than dropping into endless mode or replaying the tutorial.
-        if (PostTutorialScene != null
-            && !string.IsNullOrEmpty(PostTutorialScene.ScenePath)
-            && SceneManager.GetActiveScene().path == PostTutorialScene.ScenePath)
-        {
-            IsEndlessMode = false; // Battle 1 has its own placed enemies; don't endless-spawn on reload.
-            LoadScene(PostTutorialScene);
-            return;
-        }
-
-        if (TutorialComplete)
-            StartEndlessMode();
-        else
-            LoadLevel(0);
+        OnPlayerDied();
     }
 
     /// <summary>Initialises and enters endless mode from scratch.</summary>
@@ -427,35 +412,106 @@ public class GameManager : StateMachine<GameManager>
     /// Called when the player dies. Routes based on current game state:
     /// endless → random endless map; tutorial done → start endless; tutorial → restart same level.
     /// </summary>
+    /// <summary>
+    /// Player death (no transition): in a Battle scene, jump to another random Battle; in a tutorial
+    /// level, retry that level in place.
+    /// </summary>
     public void OnPlayerDied()
     {
-        if (IsEndlessMode)
-        {
-            Debug.Log("[GameManager] OnPlayerDied → endless mode, picking new random level.");
-            LoadNextEndlessLevel();
-        }
-        else if (TutorialComplete)
-        {
-            Debug.Log("[GameManager] OnPlayerDied → tutorial complete, starting endless.");
-            StartEndlessMode();
-        }
+        if (IsBattleScene(SceneManager.GetActiveScene().path))
+            LoadRandomBattle(fade: false);
         else
-        {
-            Debug.Log($"[GameManager] OnPlayerDied → restarting tutorial level {CurrentLevelIndex}.");
-            LoadLevel(CurrentLevelIndex);
-        }
+            ReloadActiveScene();
     }
 
     private void RequestTransition(SceneReference scene)
     {
-        if (Current is St_Gm_Transitioning) return;
-        string path = scene?.ScenePath;
-        if (string.IsNullOrEmpty(path))
+        if (scene == null || string.IsNullOrEmpty(scene.ScenePath))
         {
             Debug.LogError("[GameManager] RequestTransition called with an unassigned SceneReference. Assign it in the Inspector.");
             return;
         }
+        TransitionToPath(scene.ScenePath);
+    }
+
+    private void TransitionToPath(string path)
+    {
+        if (Current is St_Gm_Transitioning) return;
+        if (string.IsNullOrEmpty(path)) return;
         PendingScenePath = path;
         SetState<St_Gm_Transitioning>();
+    }
+
+    // ── Battle rotation (dynamic) ──────────────────────────────────────────────────
+
+    // Any "Battle*" scene currently in Build Settings counts. Add a Battle scene to the build and it
+    // joins the rotation automatically — no inspector list to maintain.
+    private static bool IsBattleScene(string scenePath) =>
+        !string.IsNullOrEmpty(scenePath) &&
+        System.IO.Path.GetFileNameWithoutExtension(scenePath)
+            .StartsWith("Battle", System.StringComparison.OrdinalIgnoreCase);
+
+    private static List<string> BattleScenePaths()
+    {
+        var battles = new List<string>();
+        int count = SceneManager.sceneCountInBuildSettings;
+        for (int i = 0; i < count; i++)
+        {
+            string path = SceneUtility.GetScenePathByBuildIndex(i);
+            if (IsBattleScene(path)) battles.Add(path);
+        }
+        return battles;
+    }
+
+    // A random Battle scene path, avoiding the current one when there's more than one to choose from.
+    private static string PickRandomBattlePath()
+    {
+        List<string> battles = BattleScenePaths();
+        if (battles.Count == 0) return null;
+        if (battles.Count == 1) return battles[0];
+
+        string current = SceneManager.GetActiveScene().path;
+        string pick;
+        do { pick = battles[Random.Range(0, battles.Count)]; }
+        while (pick == current);
+        return pick;
+    }
+
+    /// <summary>Loads a random Battle scene from Build Settings. fade=true uses the swipe/fade
+    /// transition (level clear); fade=false loads directly (death reset, no transition).</summary>
+    private void LoadRandomBattle(bool fade)
+    {
+        string pick = PickRandomBattlePath();
+        if (string.IsNullOrEmpty(pick))
+        {
+            Debug.LogError("[GameManager] No 'Battle*' scenes found in Build Settings — add at least one.");
+            return;
+        }
+
+        if (fade) TransitionToPath(pick);
+        else      SceneManager.LoadScene(pick);
+    }
+
+    /// <summary>Reloads the active scene directly (no fade transition).</summary>
+    public void ReloadActiveScene() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
+    // True when an active scene path is the scene a SceneReference points at (full path or name).
+    private static bool PathMatches(string scenePath, SceneReference reference)
+    {
+        if (reference == null) return false;
+        string target = reference.ScenePath;
+        if (string.IsNullOrEmpty(target) || string.IsNullOrEmpty(scenePath)) return false;
+        return scenePath == target ||
+               System.IO.Path.GetFileNameWithoutExtension(scenePath)
+                 == System.IO.Path.GetFileNameWithoutExtension(target);
+    }
+
+    // Index of the tutorial level matching the active scene path, or -1 if it isn't one.
+    private int TutorialIndexOf(string scenePath)
+    {
+        if (LevelScenes == null) return -1;
+        for (int i = 0; i < LevelScenes.Length; i++)
+            if (PathMatches(scenePath, LevelScenes[i])) return i;
+        return -1;
     }
 }

@@ -36,6 +36,8 @@ public class St_Pl_OnDeath : St_Pl_Base
         {
             _resetting = true;
 
+            // Death (no transition): GameManager sends us to a random Battle when we're in one, or
+            // retries the current tutorial level. Falls back to a plain reload with no GameManager.
             var gm = GameManager.Instance;
             if (gm != null)
                 gm.OnPlayerDied();

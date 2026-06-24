@@ -30,6 +30,18 @@ EditorBuildSettings:
     path: Assets/Scenes/Battle/Battle 1.unity
     guid: 43453b72e1498c3469a31582d0dd801b
   - enabled: 1
+    path: Assets/Scenes/Battle/Battle 2.unity
+    guid: 8de382571db7aa5498154650a5b257c9
+  - enabled: 1
+    path: Assets/Scenes/Battle/Battle 3.unity
+    guid: 7b5c0fd0b060a0e4fa4a755acee0b516
+  - enabled: 1
+    path: Assets/Scenes/Battle/Battle 4.unity
+    guid: ad962633b53bff246abde04a23bf6483
+  - enabled: 1
+    path: Assets/Scenes/Battle/Battle 5.unity
+    guid: c2e03aa93e411164da67a1864199ed5f
+  - enabled: 1
     path: Assets/Scenes/Menu/Intro Cutscene.unity
     guid: 4b74602e6c34c7a4b9078fff1d52027a
   - enabled: 1
