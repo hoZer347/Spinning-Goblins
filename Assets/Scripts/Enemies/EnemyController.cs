@@ -104,19 +104,27 @@ namespace hoZer
 
 		private void OnCollisionEnter2D(Collision2D collision)
 		{
-			if (!(Current is St_En1_Hitstun)) return;
+			// Both the reeling slide (Hitstun) and the dead skid (Death) are moving-projectile phases
+			// that can knock into things; in any other state we ignore collisions.
+			bool sliding = Current is St_En1_Hitstun || Current is St_En1_Death;
+			if (!sliding) return;
 
-			// gameObject.layer is a layer INDEX; LayerMask.NameToLayer compares indices.
-			// Pits are handled by IsFullyInsidePit in OnPhysics, so only Damage / walls here.
-			int layer = collision.gameObject.layer;
+			// Hazard / wall reactions only while still alive-and-reeling (Hitstun). A flashing corpse
+			// must not re-take hazard damage, re-score off spikes, or spam the wall hit sound.
+			if (Current is St_En1_Hitstun)
+			{
+				// gameObject.layer is a layer INDEX; LayerMask.NameToLayer compares indices.
+				// Pits are handled by IsFullyInsidePit in OnPhysics, so only Damage / walls here.
+				int layer = collision.gameObject.layer;
 
-			if (layer == LayerMask.NameToLayer("Damage"))
-				HurtByHazard();              // hit spikes mid-hitstun
-			else if (layer == LayerMask.NameToLayer("Obstacle"))
-				PlayHit();                   // bounced off a wall mid-hitstun
+				if (layer == LayerMask.NameToLayer("Damage"))
+					HurtByHazard();              // hit spikes mid-hitstun
+				else if (layer == LayerMask.NameToLayer("Obstacle"))
+					PlayHit();                   // bounced off a wall mid-hitstun
+			}
 
-			// Knocked into another enemy: pass the hit on. It takes damage + hitstun and, carried by
-			// the same collision impulse, can knock into the next enemy — a chain reaction.
+			// Knocked into another enemy: pass the hit on whether we're reeling (Hitstun) or skidding
+			// out as a corpse (Death). It takes damage + hitstun and can knock into the next — a chain.
 			EnemyController other = collision.gameObject.GetComponent<EnemyController>();
 			if (other != null)
 				other.HitByEnemy();

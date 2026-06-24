@@ -69,8 +69,15 @@ public class MusicController : MonoBehaviour
     /// <summary>Starts the intro→loop sequence, scheduling the loop to begin exactly as the intro ends.</summary>
     public void Play()
     {
-        // Small lead-in so both scheduled starts are armed before the DSP clock reaches them.
-        double startTime = AudioSettings.dspTime + 0.1;
+        // Force the clips fully resident BEFORE scheduling. They're DecompressOnLoad + Vorbis and, in a
+        // build, aren't preloaded by default — so without this the decompress can overrun the scheduled
+        // start, the intro slips in late, and it ends up playing on top of the loop (the song doubles).
+        // In the editor the clips are already in memory, which is why it only ever shows up in a build.
+        if (intro != null) intro.LoadAudioData();
+        if (loop  != null) loop.LoadAudioData();
+
+        // Lead-in so both scheduled starts are armed before the DSP clock reaches them.
+        double startTime = AudioSettings.dspTime + 0.2;
 
         if (intro != null)
         {
