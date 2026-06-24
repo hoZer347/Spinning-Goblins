@@ -100,9 +100,9 @@ public class ScoreUI : MonoBehaviour
 	/// <summary>An enemy knocked into the damage layer: 20 per point of damage dealt.</summary>
 	public void AddHazardDamage(int damage, Vector3 at) => AddAt(20 * damage, at, HazardColor);
 
-	/// <summary>A normal enemy kill.</summary>
-	public void AddKill(Vector3 at) => AddAt(100, at, KillColor);
+	/// <summary>A normal enemy kill, worth the enemy's own kill score.</summary>
+	public void AddKill(int score, Vector3 at) => AddAt(score, at, KillColor);
 
-	/// <summary>A kill by knockback into a pit: 100 + 20 per remaining HP.</summary>
-	public void AddPitKill(int remainingHealth, Vector3 at) => AddAt(100 + 20 * remainingHealth, at, PitColor);
+	/// <summary>A kill by knockback into a pit: the enemy's kill score + 20 per remaining HP.</summary>
+	public void AddPitKill(int baseScore, int remainingHealth, Vector3 at) => AddAt(baseScore + 20 * remainingHealth, at, PitColor);
 }

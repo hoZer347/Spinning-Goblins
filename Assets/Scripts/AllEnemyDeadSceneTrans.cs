@@ -24,12 +24,10 @@ public class AllEnemyDeadSceneTrans : MonoBehaviour
 				// Always route through GameManager so CurrentLevelIndex stays in sync.
 				if (GameManager.Instance != null)
 				{
-					Debug.Log($"[AllEnemyDeadSceneTrans] All enemies dead — calling GameManager.LoadNextLevel (currentIndex={GameManager.Instance.CurrentLevelIndex})");
 					GameManager.Instance.LoadNextLevel();
 				}
 				else if (nextScene != null && !string.IsNullOrEmpty(nextScene.ScenePath))
 				{
-					Debug.Log($"[AllEnemyDeadSceneTrans] All enemies dead — no GameManager, loading nextScene: {nextScene.ScenePath}");
 					SceneManager.LoadScene(nextScene.ScenePath);
 				}
 				else

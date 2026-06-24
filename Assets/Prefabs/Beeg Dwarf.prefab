@@ -1,0 +1,442 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7417291820908702755
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3663504768785201714}
+  - component: {fileID: 8472910385762014553}
+  - component: {fileID: 4759638233471975639}
+  - component: {fileID: 8951117970628985409}
+  - component: {fileID: 3051321341369431219}
+  - component: {fileID: 6770229808479700758}
+  - component: {fileID: 1169152603132774089}
+  - component: {fileID: 6770229808479700759}
+  m_Layer: 7
+  m_Name: Beeg Dwarf
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3663504768785201714
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8472910385762014553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c2e4b7a1d6f3c8e5a0b9d4f2c7e1a3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: BeegDwarfIntro
+  dialogue: {fileID: 0}
+  preDropDelay: 1.5
+  dropDuration: 0.6
+  dropMargin: 2
+  landingShakeAmount: 5
+  landingShakeDuration: 0.5
+  knockSpeed: 18
+  knockSpin: 720
+  pointsPerEnemy: 100
+  endMusicIntro: {fileID: 8300000, guid: f05b89a5727388c4ba1f1d18276f4d06, type: 3}
+  endMusicLoop: {fileID: 8300000, guid: 5f54d4945dffb184d98655913f303221, type: 3}
+--- !u!114 &4759638233471975639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e05a4421a45bad438bd8144954af5bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::hoZer.EnemyController
+  _startState:
+    _state:
+      rid: 7327565970620022852
+  maxSavedStates: 0
+  rigidbody: {fileID: 8951117970628985409}
+  collider: {fileID: 3051321341369431219}
+  spriteRenderer: {fileID: 6770229808479700758}
+  playerController: {fileID: 0}
+  detectionRadius: 20
+  wanderWaitMin: 1
+  wanderWaitMax: 3
+  wanderSpeed: 2
+  wanderDistanceMin: 1
+  wanderDistanceMax: 3
+  wanderTimeMin: 1
+  wanderTimeMax: 3
+  hitstunDuration: 0.3
+  hitstunKnockback: 18
+  stopFriction: 5
+  pauseDuration: 1
+  approachSpeed: 2
+  canFling: 1
+  flingRange: 40
+  flingWindup: 0.6
+  flingSpeed: 20
+  flingStretch: 1.5
+  flingCooldown: 1.5
+  flingDirection: {x: 0, y: 0}
+  flingReadyAt: 0
+  canSpinAttack: 1
+  spinDetectRange: 8
+  spinWindup: 1
+  spinAttackTime: 2.5
+  spinAttackDistance: 8
+  spinCooldown: 1.5
+  spinSquash: 0.3
+  spinWobbleCycles: 4
+  spinDirection: {x: 0, y: 0}
+  spinReadyAt: 0
+  cutsceneSpinIntensity: 0
+  fallingDuration: 1
+  spawnCost: 1
+  maxHealth: 5
+  killScore: 200
+  damageCooldown: 0.25
+  healthBarHeight: 0.4
+  audioSource: {fileID: 1169152603132774089}
+  hitstunSound: {fileID: 8300000, guid: 489a27779fabdf04585bf902c883f1da, type: 3}
+  pitFall: {fileID: 8300000, guid: 5ea82601deede1144bc00282509b02cd, type: 3}
+  spinSound: {fileID: 8300000, guid: 56c5831405658674f85bbb2a93e7fffd, type: 3}
+  spinVolume: 0.42
+  spinPitchLow: 0.3
+  spinPitchHigh: 0.7
+  spinIntervalMax: 0.45
+  spinIntervalMin: 0.07
+  spinAudioSource: {fileID: 0}
+  sprIdle: {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  sprWalkUp: {fileID: -5994909603457892995, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  sprWalkLeft: {fileID: -1181442305833438096, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  sprWalkDown: {fileID: 5837032168538748433, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  sprWalkRight: {fileID: -8934896484919966459, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  sprSleeping: {fileID: -6461200491186749769, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  sprSpinning: {fileID: -7815508818910395713, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  sprFalling: {fileID: 8451940769943242572, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  hasExternalKnockback: 0
+  externalKnockbackDir: {x: 0, y: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: 7327565970620022852
+      type: {class: St_En1_Wait, ns: hoZer, asm: Assembly-CSharp}
+      data:
+        gameObject: {fileID: 0}
+        stateMachine: {fileID: 0}
+--- !u!50 &8951117970628985409
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 2
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
+--- !u!58 &3051321341369431219
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.9
+--- !u!212 &6770229808479700758
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.2, y: 0.2}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!82 &1169152603132774089
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &6770229808479700759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417291820908702755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12477f6d8a094713ae7f09ed1be3f477, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IdleFrames:
+  - {fileID: -766977523580822398, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: 4491903461036982114, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: 4307909441866256769, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  - {fileID: -376968529573562137, guid: 5a83c8887f2ceff49b777ff0439ccd75, type: 3}
+  SleepingFrames:
+  - {fileID: -6461200491186749769, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: -2213118752696755559, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: -5846396557865032034, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  - {fileID: 6809358978445633766, guid: 68a9353d88b12f84093436b9ca55baa2, type: 3}
+  WalkUpFrames:
+  - {fileID: -5994909603457892995, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: 2292696910765909006, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: -8753389792035325029, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  - {fileID: -1325569950911192880, guid: 8507ad5502f1fcc479969e9d88fd1f75, type: 3}
+  WalkDownFrames:
+  - {fileID: 5837032168538748433, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 7150482370100517122, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 2220971137338942940, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  - {fileID: 4372184505923092393, guid: 3b024940f5bfff644a9d9267936279b5, type: 3}
+  WalkLeftFrames:
+  - {fileID: -1181442305833438096, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 930245020146324491, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 4694097155720166457, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  - {fileID: 4366560730596780196, guid: adc5ab65a61bafa41a8189e4e000b16a, type: 3}
+  WalkRightFrames:
+  - {fileID: -8934896484919966459, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 5502934751631555483, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 7014731021716794231, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  - {fileID: 4354811732103257361, guid: bca6a9caa4c7c16429543c7eadd9349c, type: 3}
+  SpinFrames:
+  - {fileID: -7815508818910395713, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -7442555119098151632, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -2322641026566669223, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -9173906579144540985, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -5301689868106870693, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -8572748235974396269, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -3856225872613377529, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  - {fileID: -5056825839556098863, guid: dc6ff1d7dd84b6544b570fe371b9b4a8, type: 3}
+  FallingFrames:
+  - {fileID: 8451940769943242572, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -7715317484378048481, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -9108681546828122939, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: 6335994049876620864, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: 1907192312633416190, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -3870935832502153554, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -1547319414024498973, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  - {fileID: -3658331243292005406, guid: 272b70ad2d3e09b49a8c37c8098f7001, type: 3}
+  FramesPerSecond: 6
+  SpinFramesPerSecond: 18
+  SpinFpsPerSpeed: 1.5
+  SpinFpsMax: 60
+  SquashAmount: 0.35
+  SquashDuration: 0.08
+  StretchAmount: 0.2
+  StretchDuration: 0.14
+  ImpactReferenceSpeed: 12
+  ImpactSpeedBoost: 1.4
+  ScaleSmoothing: 16
+  MoveEpsilon: 0.0015
+  DirectionHysteresis: 12

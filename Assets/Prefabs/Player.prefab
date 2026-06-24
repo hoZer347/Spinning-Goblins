@@ -60,9 +60,9 @@ MonoBehaviour:
   DragLine: {fileID: 1757438519526932735}
   DragLineShadow: {fileID: 2216766123474161999}
   Sprite: {fileID: 7443837218076446409}
-  LaunchForceMultiplier: 5
-  MaxDragDistance: 5
-  StretchCompression: 0.5
+  LaunchForceMultiplier: 6.6667
+  MaxDragDistance: 3.75
+  StretchCompression: 1
   LinearDamping: 0.8
   StickyDamping: 8
   StickyThreshold: 3

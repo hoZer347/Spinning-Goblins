@@ -64,6 +64,9 @@ public class PlayerController : StateMachine<PlayerController>
 	[SerializeField] public float hitStunTime = 1f;
 	[Tooltip("Spike knockback: the player is launched straight away from the spike at this fixed speed.")]
 	[SerializeField] public float SpikeBounceSpeed = 25f;
+	[Tooltip("How much of the bounce off an enemy the player keeps when flying through it (0 = full " +
+		"bounce-back, 1 = plows straight through). A small value just softens the recoil a touch.")]
+	[Range(0f, 1f)] [SerializeField] public float EnemyHitBounceReduction = 0.25f;
 
 	[Header("Health (optional)")]
 	[Tooltip("Show a dot health bar and let the player die. Off = unkillable (hitstun only, as before).")]
@@ -102,10 +105,18 @@ public class PlayerController : StateMachine<PlayerController>
 
 	float _spinTimer;
 	AudioSource spinSource;
-	bool _hadEnemiesThisLevel;
 
 	/// <summary>Velocity from the previous FixedUpdate — before collision resolution flips it.</summary>
 	[HideInInspector] public Vector2 PreImpactVelocity;
+
+	/// <summary>
+	/// Where the goblin actually is on screen — the Sprite child's world position. During a drag the
+	/// root (which carries the Rigidbody/collider) stays put while only the Sprite is pulled to the
+	/// stretched spot, so anything that needs the player's REAL location — enemy targeting, the drag
+	/// hurt check, knockback direction — must read this, not transform.position. Outside a drag the
+	/// sprite sits on the root, so this just returns the body position.
+	/// </summary>
+	public Vector2 Position => Sprite != null ? (Vector2)Sprite.transform.position : (Vector2)transform.position;
 
 	/// <summary>States during which incoming damage / pits are ignored.</summary>
 	public bool IsInvulnerable =>
@@ -166,7 +177,10 @@ public class PlayerController : StateMachine<PlayerController>
 		if (UseHealthBar)
 		{
 			_health = MaxHealth;
-			_healthBar = EnemyHealthBar.Create(transform, MaxHealth, HealthBarHeight);
+			// Anchor to the Sprite, not the root: during a drag the root stays put while only the Sprite
+			// is pulled back, so following the Sprite keeps the bar snapped to the goblin wherever it's
+			// drawn — including held at the stretched position throughout the pull-back.
+			_healthBar = EnemyHealthBar.Create(Sprite != null ? Sprite.transform : transform, MaxHealth, HealthBarHeight);
 		}
 
 		SetState<St_Pl_Idle>();
@@ -211,14 +225,8 @@ public class PlayerController : StateMachine<PlayerController>
 		if (!IsInvulnerable && IsCenterOverExit())
 			GameManager.Instance?.RestartLevel();
 
-		if (!_hadEnemiesThisLevel)
-			_hadEnemiesThisLevel = FindAnyObjectByType<EnemyController>() != null;
-
-		if (_hadEnemiesThisLevel
-			&& FindAnyObjectByType<EnemyController>() == null
-			&& GameManager.Instance != null
-			&& !(GameManager.Instance.Current is St_Gm_Transitioning))
-			GameManager.Instance.LoadNextLevel();
+		// Clearing the arena no longer auto-advances the level here — an AllEnemyDeadSceneTrans
+		// behaviour in the scene owns that decision, so the player doesn't force a transition.
 	}
 
 	/// <summary>Kicks the camera's own state machine into its shake state, if one exists.</summary>
@@ -281,12 +289,10 @@ public class PlayerController : StateMachine<PlayerController>
 		_spinTimer -= Time.deltaTime;
 		if (_spinTimer > 0f) return;
 
-		// Both the pitch of each whoosh and the gap until the next rise with intensity.
-		if (spin != null && spinSource != null)
-		{
-			spinSource.pitch = Mathf.Lerp(spinPitchMin, spinPitchMax, t);
-			spinSource.PlayOneShot(spin, spinVolume);
-		}
+		// Both the pitch of each whoosh and the gap until the next rise with intensity. Routed through
+		// the SfxManager so the rapid whooshes duck against the rest of the mix instead of piling up.
+		if (spin != null)
+			SfxManager.Play(spin, spinVolume, Mathf.Lerp(spinPitchMin, spinPitchMax, t));
 
 		_spinTimer = Mathf.Lerp(spinIntervalMax, spinIntervalMin, t);
 	}

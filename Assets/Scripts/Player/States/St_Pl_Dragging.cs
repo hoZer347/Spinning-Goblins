@@ -12,17 +12,29 @@ public class St_Pl_Dragging : St_Pl_Base
 
     private Vector2 _origin;
     private Vector2 _virtualScreen; // unclamped virtual cursor; the screen edge can't cap the pull
-    private Vector2 _lastMouse;     // real cursor position last frame, to measure movement
     Duration _wooshSFXDelay;
 
     public override void OnEnter(State lastState)
     {
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
-        Focus.LaunchForce = Vector2.zero;
+
+        // Continuous collision detection SWEEPS the collider along the path from its previous physics
+        // position to the new one and reports anything on that line as a hit. While dragging we hand-
+        // position the body every frame, so that path runs from the drag origin out to the stretched
+        // spot — and an enemy anywhere along it (including back at the origin) lands a hit, even though
+        // the goblin is pulled away. Discrete detection collides only at the collider's ACTUAL current
+        // position. Continuous is only needed for the fast flight (anti-tunneling); restored on exit.
+        Focus.Rigidbody.collisionDetectionMode = CollisionDetectionMode2D.Discrete;
+
         _origin        = Focus.transform.position;
-        _lastMouse     = Mouse.current.position.ReadValue();
-        _virtualScreen = _lastMouse;
+
+        // Lock (and hide) the OS cursor for the pull. Raw mouse movement then drives it and keeps
+        // flowing even when the pointer would run off-screen, so the pull charges to FULL strength while
+        // the goblin — and the on-screen cursor sprite the CursorManager draws on it — stay clamped at
+        // the screen edge. Start the virtual cursor at the click so the pull begins at zero. Released in OnExit.
+        Cursor.lockState = CursorLockMode.Locked;
+        _virtualScreen   = Camera.main.WorldToScreenPoint(Focus.DragClickPosition);
 
         string spriteLayer = Focus.Sprite != null ? Focus.Sprite.sortingLayerName : "Default";
         int    spriteOrder = Focus.Sprite != null ? Focus.Sprite.sortingOrder     : 0;
@@ -60,12 +72,10 @@ public class St_Pl_Dragging : St_Pl_Base
 
     public override void OnUpdate()
     {
-        // Track the cursor through a VIRTUAL position the screen edge can't cap. While the real
-        // cursor is on-screen this just follows it (normal pull-back); once it's pinned at the edge
-        // (warped below) the movement past the edge still accumulates here, so the pull keeps growing.
-        Vector2 realMouse = Mouse.current.position.ReadValue();
-        _virtualScreen += realMouse - _lastMouse;
-        _lastMouse = realMouse;
+        // The cursor is locked, so raw mouse movement drives a VIRTUAL position the screen edge can't
+        // cap — the delta keeps accumulating even as the pointer would run off-screen, so the pull
+        // charges to full strength while the goblin stays clamped on-screen.
+        _virtualScreen += Mouse.current.delta.ReadValue();
 
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(_virtualScreen);
         Vector2 dragVec = mouseWorld - Focus.DragClickPosition;
@@ -74,19 +84,6 @@ public class St_Pl_Dragging : St_Pl_Base
         {
             dragVec = dragVec.normalized * Focus.MaxDragDistance;
             _virtualScreen = Camera.main.WorldToScreenPoint(Focus.DragClickPosition + dragVec);
-        }
-
-        // Keep the real cursor inside the window so it never reappears off-screen — the movement
-        // past the edge is already folded into _virtualScreen above, so the pull doesn't lose it.
-        // WebGL can't warp the OS cursor (and the browser already clamps the mouse to the canvas),
-        // so skip it there; the pull-back still works, it just won't keep charging past the edge.
-        Vector2 onScreen = new Vector2(
-            Mathf.Clamp(realMouse.x, 0f, Screen.width),
-            Mathf.Clamp(realMouse.y, 0f, Screen.height));
-        if (onScreen != realMouse && Application.platform != RuntimePlatform.WebGLPlayer)
-        {
-            Mouse.current.WarpCursorPosition(onScreen);
-            _lastMouse = onScreen;
         }
 
         // Launch power comes from the FULL pull, so compression and the wall / screen clamping
@@ -107,10 +104,24 @@ public class St_Pl_Dragging : St_Pl_Base
         targetPos.x = Mathf.Clamp(targetPos.x, sMin.x + extents.x, sMax.x - extents.x);
         targetPos.y = Mathf.Clamp(targetPos.y, sMin.y + extents.y, sMax.y - extents.y);
 
-        Focus.transform.position = new Vector3(targetPos.x, targetPos.y, Focus.transform.position.z);
+        // Move ONLY the Sprite child to the stretched position — never the root. The root carries the
+        // Rigidbody, and a hand-moved Kinematic body is snapped straight back to the drag origin by the
+        // physics writeback every step, dragging the collider (and the transform.position enemies read)
+        // to the origin with it — that's the whole "hit/target the origin" bug. The Sprite has no
+        // physics, so it holds the stretched spot cleanly. Enemies and the hurt check read the sprite
+        // via PlayerController.Position, so they track the goblin where it's drawn, not the origin.
+        if (Focus.Sprite != null)
+            Focus.Sprite.transform.position =
+                new Vector3(targetPos.x, targetPos.y, Focus.Sprite.transform.position.z);
 
-        // Line from the pulled-back body, through origin, out along the launch direction.
-        Vector3 lineStart = Focus.transform.position;
+        // Hurt is evaluated by an explicit overlap at the goblin's drawn position (the sprite), not via
+        // the physics collider — which is back on the stationary root and would never line up here.
+        if (CheckDragHurt(targetPos))
+            return;
+
+        // Line from the pulled-back body (the sprite, now the stretched position), through origin,
+        // out along the launch direction.
+        Vector3 lineStart = new Vector3(targetPos.x, targetPos.y, Focus.transform.position.z);
         Vector3 lineEnd   = (Vector3)(_origin - dragVec) + new Vector3(0, 0, Focus.transform.position.z);
 
         if (Focus.DragLine != null)
@@ -129,6 +140,31 @@ public class St_Pl_Dragging : St_Pl_Base
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
             SetState<St_Pl_Flying>();
+    }
+
+    // Hurts the player if a live enemy overlaps the goblin where it's actually drawn (a circle the
+    // size of the player's own collider, centred on the stretched body). Evaluated from the live
+    // position each frame so it can't lag at the drag origin the way the physics collider does.
+    // Returns true once a hit is taken (the state has already changed — the caller must stop).
+    private bool CheckDragHurt(Vector2 bodyCenter)
+    {
+        float radius = Focus.Collider != null ? Focus.Collider.bounds.extents.x : 0.5f;
+
+        foreach (Collider2D c in Physics2D.OverlapCircleAll(bodyCenter, radius))
+        {
+            EnemyController enemy = c.GetComponentInParent<EnemyController>();
+            if (enemy == null) continue;
+
+            // A reeling, dying or falling enemy is harmless — only a live one threatens the player.
+            bool harmless = enemy.Current is St_En1_Hitstun
+                || enemy.Current is St_En1_Death
+                || enemy.Current is St_En1_Falling;
+            if (harmless) continue;
+
+            HurtFromEnemy(enemy);
+            return true;
+        }
+        return false;
     }
 
     // Stops the stretch offset short of any obstacle it would enter, keeping its direction so the
@@ -151,6 +187,20 @@ public class St_Pl_Dragging : St_Pl_Base
     {
         // Release the cursor — it's free to roam (and leave the window) again outside the drag.
         Cursor.lockState = CursorLockMode.None;
+
+        // Restore continuous detection for the launch — the flight is fast enough to tunnel walls.
+        Focus.Rigidbody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+        // Hand the sprite's stretched position back to the body so the launch (and the collider, and
+        // the knockback if we were hit) begins from where the goblin is drawn — then re-centre the
+        // sprite on the body so every non-drag state has the visual back on the root again.
+        if (Focus.Sprite != null)
+        {
+            Vector3 launchPos = Focus.Sprite.transform.position;
+            Focus.transform.position = new Vector3(launchPos.x, launchPos.y, Focus.transform.position.z);
+            Focus.Rigidbody.position = launchPos;
+            Focus.Sprite.transform.localPosition = Vector3.zero;
+        }
 
         // Launch from where the body actually is (the stretched position) instead of snapping
         // back to the drag origin — the flight begins from where the player starts moving.

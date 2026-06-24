@@ -29,6 +29,14 @@ public class EnemySpriteAnimator : MonoBehaviour
     [Header("Timing")]
     public float FramesPerSecond = 6f;
 
+    [Header("Hit Spin")]
+    [Tooltip("Base frames/second for the hit-spin (Hitstun / braking / death). Much faster than the walk rate so a struck enemy visibly whirls.")]
+    public float SpinFramesPerSecond = 18f;
+    [Tooltip("Extra spin frames/second added per unit of knockback speed — the harder the hit, the faster the whirl, easing off as it brakes to rest.")]
+    public float SpinFpsPerSpeed = 1.5f;
+    [Tooltip("Upper cap on spin frames/second so a very fast hit doesn't blur into mush.")]
+    public float SpinFpsMax = 60f;
+
     [Header("Impact Squash & Stretch")]
     [Range(0f, 0.95f)] public float SquashAmount = 0.35f;
     public float SquashDuration = 0.08f;
@@ -115,7 +123,7 @@ public class EnemySpriteAnimator : MonoBehaviour
 
         if (_current == null || _current.Length == 0) return;
 
-        _frameTimer += FramesPerSecond * Time.deltaTime;
+        _frameTimer += FpsFor(state) * Time.deltaTime;
         while (_frameTimer >= 1f)
         {
             _frameTimer -= 1f;
@@ -125,13 +133,40 @@ public class EnemySpriteAnimator : MonoBehaviour
         _renderer.sprite = _current[_frame];
     }
 
+    // Playback rate for the current state. The hit-spin runs fast and scales with knockback speed —
+    // a hard hit whirls quickly and slows as the body brakes to rest; everything else uses the base rate.
+    private float FpsFor(State state)
+    {
+        // The cutscene spin winds up: its whirl rate climbs from the base spin rate toward the cap as
+        // the dwarf speeds up (intensity 0..1, set by St_En1_CutsceneSpin).
+        if (state is St_En1_CutsceneSpin)
+            return Mathf.Lerp(SpinFramesPerSecond, SpinFpsMax, Mathf.Clamp01(_enemy.cutsceneSpinIntensity));
+
+        // The Beeg Dwarf's charge/attack/wind-down whirl in place (velocity ~0), so give them the flat spin rate.
+        if (state is St_En1_SpinWindup || state is St_En1_SpinAttack || state is St_En1_SpinRecover) return SpinFramesPerSecond;
+
+        if (!IsHitSpin(state)) return FramesPerSecond;
+
+        float speed = _enemy.rigidbody != null ? _enemy.rigidbody.linearVelocity.magnitude : 0f;
+        return Mathf.Min(SpinFpsMax, SpinFramesPerSecond + speed * SpinFpsPerSpeed);
+    }
+
+    // The knockback states that render the spin sheet: the hit, the braking slide after it, and death.
+    private static bool IsHitSpin(State state) =>
+        state is St_En1_Hitstun || state is St_En1_Stopping || state is St_En1_Death;
+
     private Sprite[] FramesFor(State state)
     {
         if (state is St_En1_Sleeping) return Use(SleepingFrames);
         if (state is St_En1_Falling)  return Use(FallingFrames, SpinFrames);
-        if (state is St_En1_Hitstun || state is St_En1_Death) return Use(SpinFrames); // spin through the hit + death
-        if (state is St_En1_Wander || state is St_En1_Approach
-            || state is St_En1_Fling || state is St_En1_Stopping)
+        // The Beeg Dwarf whirls the spin sheet through its charge, its released attack and the wind-down —
+        // and its cutscene wind-up spin.
+        if (state is St_En1_SpinWindup || state is St_En1_SpinAttack || state is St_En1_SpinRecover || state is St_En1_CutsceneSpin) return Use(SpinFrames);
+        // Spin through the whole knockback: the hit (Hitstun), the braking slide that follows it
+        // (Stopping), and death. Stopping is still the enemy reeling from the blow — showing a
+        // directional walk sprite there made a hit enemy look like it was just facing a way, not spinning.
+        if (IsHitSpin(state)) return Use(SpinFrames);
+        if (state is St_En1_Wander || state is St_En1_Approach || state is St_En1_Fling)
             return WalkFrames();
         return Use(IdleFrames); // Wait / Pause / FlingWindup / Die / anything else
     }
@@ -169,7 +204,11 @@ public class EnemySpriteAnimator : MonoBehaviour
     // spring back through a stretch. Skipped while Falling / FlingWindup own the transform scale.
     private void UpdateImpactScale(State state)
     {
-        if (state is St_En1_Falling || state is St_En1_FlingWindup) return;
+        // Falling / FlingWindup, and the Beeg Dwarf's spin charge/attack/wind-down/cutscene-spin, all drive
+        // the scale themselves.
+        if (state is St_En1_Falling || state is St_En1_FlingWindup
+            || state is St_En1_SpinWindup || state is St_En1_SpinAttack
+            || state is St_En1_SpinRecover || state is St_En1_CutsceneSpin) return;
 
         bool moving    = state is St_En1_Hitstun || state is St_En1_Stopping || state is St_En1_Fling;
         bool inContact = _enemy.rigidbody != null && _enemy.rigidbody.GetContacts(_contacts) > 0;

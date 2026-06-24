@@ -23,7 +23,7 @@ public class St_Pl_Falling : St_Pl_Base
         Focus.Rigidbody.linearVelocity = Vector2.zero;
         if (Focus.DragLine != null) Focus.DragLine.enabled = false;
 
-        if (Focus.audioSource != null) Focus.audioSource.PlayOneShot(Focus.pitFall, 2f);
+        SfxManager.Play(Focus.pitFall, 2f);
     }
 
     public override void OnUpdate()

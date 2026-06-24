@@ -15,6 +15,10 @@ namespace hoZer
 		{
 			base.OnEnter(lastState);
 
+			// Kinematic + zero velocity: this state moves by transform, so the body must not carry
+			// residual physics velocity from a collision.
+			Focus.EnterAIMovement();
+
 			direction = UnityEngine.Random.insideUnitCircle.normalized;
 			wanderDistance =
 				UnityEngine.Random.Range(
@@ -31,9 +35,16 @@ namespace hoZer
 		{
 			base.OnUpdate();
 
-			if (Vector3.Distance(
+			// A Beeg Dwarf charges a spin the instant the player wanders into spin-detect range.
+			if (Focus.WantsSpinAttack())
+			{
+				SetState<St_En1_SpinWindup>();
+				return;
+			}
+
+			if (Vector2.Distance(
 					Focus.transform.position,
-					Focus.playerController.transform.position)
+					Focus.playerController.Position)
 				<= Focus.detectionRadius)
 				SetState<St_En1_Approach>();
 		}

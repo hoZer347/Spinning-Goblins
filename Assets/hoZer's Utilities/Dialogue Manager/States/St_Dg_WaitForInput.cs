@@ -18,7 +18,12 @@ namespace hoZer.Dialogue
 		{
 			base.OnUpdate();
 
-			if (Keyboard.current.spaceKey.wasPressedThisFrame)
+			// Advance on a left click (how the cutscene / game is driven) or the spacebar. Guard the
+			// devices: either can be null on a build with no mouse / no keyboard attached.
+			bool clicked = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+			bool spaced  = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+
+			if (clicked || spaced)
 				Proceed();
 		}
 

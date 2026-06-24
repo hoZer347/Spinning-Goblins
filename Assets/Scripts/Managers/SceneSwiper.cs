@@ -28,7 +28,6 @@ public class SceneSwiper : MonoBehaviour
         {
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 999;
-            Debug.Log($"[SceneSwiper] Awake — canvas set to ScreenSpaceOverlay sortOrder=999. root='{transform.root.name}'");
         }
         else
         {
@@ -38,19 +37,16 @@ public class SceneSwiper : MonoBehaviour
         // If not already under a DontDestroyOnLoad root (e.g. GameManager), make root persistent.
         if (transform.root.GetComponent<GameManager>() == null)
         {
-            Debug.Log($"[SceneSwiper] Awake — root '{transform.root.name}' has no GameManager, calling DontDestroyOnLoad.");
             DontDestroyOnLoad(transform.root.gameObject);
         }
 
         Park();
-        Debug.Log($"[SceneSwiper] Awake — parked at {_rect.anchoredPosition}, rect.width={_rect.rect.width}, Screen.width={Screen.width}");
 
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDestroy()
     {
-        Debug.Log("[SceneSwiper] OnDestroy — unsubscribing from sceneLoaded.");
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -65,11 +61,8 @@ public class SceneSwiper : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"[SceneSwiper] OnSceneLoaded '{scene.name}' — _swipedIn={_swipedIn}, pos={_rect.anchoredPosition}");
         if (_swipedIn)
             StartCoroutine(SwipeOut());
-        else
-            Debug.Log("[SceneSwiper] OnSceneLoaded — _swipedIn is false, skipping SwipeOut.");
     }
 
     private float Width() => _rect.rect.width > 0f ? _rect.rect.width : Screen.width;
@@ -78,7 +71,6 @@ public class SceneSwiper : MonoBehaviour
     {
         float w = Width();
         _rect.anchoredPosition = new Vector2(w, 0f);
-        Debug.Log($"[SceneSwiper] Park — pos set to ({w}, 0)");
     }
 
     public IEnumerator SwipeIn()
@@ -87,11 +79,9 @@ public class SceneSwiper : MonoBehaviour
         _animating = true;
         float w = Width();
         _rect.anchoredPosition = new Vector2(w, 0f);
-        Debug.Log($"[SceneSwiper] SwipeIn START — from ({w},0) to (0,0), duration={SwipeInDuration}, rect.width={_rect.rect.width}");
         Play(SwipeInSound);
         yield return Slide(w, 0f, SwipeInDuration);
         _animating = false;
-        Debug.Log($"[SceneSwiper] SwipeIn END — pos={_rect.anchoredPosition}");
     }
 
     public IEnumerator SwipeOut()
@@ -103,10 +93,8 @@ public class SceneSwiper : MonoBehaviour
         yield return null;
         float w = Width();
         _rect.anchoredPosition = new Vector2(0f, 0f);
-        Debug.Log($"[SceneSwiper] SwipeOut START — from (0,0) to ({-w},0), duration={SwipeOutDuration}, rect.width={_rect.rect.width}");
         Play(SwipeOutSound);
         yield return Slide(0f, -w, SwipeOutDuration);
-        Debug.Log($"[SceneSwiper] SwipeOut END — pos={_rect.anchoredPosition}");
         Park();
         _animating = false;
     }

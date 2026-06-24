@@ -20,9 +20,9 @@ namespace hoZer
 
 			pause.Reset(Focus.pauseDuration);
 
-			// Stop dead so we don't keep pushing the player during the pause.
-			if (Focus.rigidbody != null)
-				Focus.rigidbody.linearVelocity = Vector2.zero;
+			// Go Kinematic and stop dead: we just bumped the player, so we must neither keep shoving it
+			// nor get shoved ourselves when it bounces back — otherwise we drift off jittering.
+			Focus.EnterAIMovement();
 		}
 
 		public override void OnUpdate()

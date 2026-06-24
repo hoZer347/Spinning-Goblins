@@ -24,11 +24,18 @@ namespace hoZer
             Focus.rigidbody.sharedMaterial = _bounceMat;
             Focus.rigidbody.linearDamping  = 1f;
 
-            if (Focus.playerController != null)
+            // An external bumper (the Beeg Dwarf's spin) gets first say on the reel direction, so the
+            // victim flies away from what actually hit it rather than from the player.
+            if (Focus.hasExternalKnockback)
+            {
+                Focus.rigidbody.linearVelocity = Focus.externalKnockbackDir.normalized * Focus.hitstunKnockback;
+                Focus.hasExternalKnockback = false;
+            }
+            else if (Focus.playerController != null)
             {
                 Vector2 hitDir = Focus.playerController.PreImpactVelocity;
                 if (hitDir.sqrMagnitude < 0.1f)
-                    hitDir = (Vector2)(Focus.transform.position - Focus.playerController.transform.position);
+                    hitDir = (Vector2)Focus.transform.position - Focus.playerController.Position;
 
                 Focus.rigidbody.linearVelocity = hitDir.normalized * Focus.hitstunKnockback;
             }
