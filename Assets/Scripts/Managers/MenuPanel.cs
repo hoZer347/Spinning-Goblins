@@ -69,10 +69,19 @@ public class MenuPanel : MonoBehaviour
         _group.blocksRaycasts  = false;
 
         // Kick off item stagger immediately (they inherit alpha from the parent CanvasGroup).
+        // MenuButton children do an elastic bounce-in; plain children slide in as before.
         for (int i = 0; i < _items.Length; i++)
         {
-            _items[i].anchoredPosition = _itemOrigins[i] + ItemSlideOffset;
-            StartCoroutine(AnimateItem(i));
+            var btn = _items[i].GetComponent<MenuButton>();
+            if (btn != null)
+            {
+                StartCoroutine(btn.BounceIn(i * ItemDelay));
+            }
+            else
+            {
+                _items[i].anchoredPosition = _itemOrigins[i] + ItemSlideOffset;
+                StartCoroutine(AnimateItem(i));
+            }
         }
 
         // Panel fade + slide.
@@ -125,7 +134,10 @@ public class MenuPanel : MonoBehaviour
         _group.blocksRaycasts = true;
         _rect.anchoredPosition = Vector2.zero;
         for (int i = 0; i < _items.Length; i++)
+        {
             _items[i].anchoredPosition = _itemOrigins[i];
+            _items[i].GetComponent<MenuButton>()?.ResetScale();
+        }
     }
 
     /// <summary>Snaps hidden with no animation.</summary>

@@ -79,6 +79,9 @@ public class GameManager : StateMachine<GameManager>
     private float _sessionStartTime;
     private float _levelStartTime;
 
+    private AsyncOperation _preloadedOp;
+    private string         _preloadedPath;
+
     // Loaded via RuntimeInitializeOnLoadMethod when running a scene directly in the editor.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoBootstrap()
@@ -149,9 +152,48 @@ public class GameManager : StateMachine<GameManager>
     // or the Play-time skip) — records the tutorial as done.
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Reaching any Battle scene means the tutorial is done — persist it for the build-only skip.
         if (IsBattleScene(scene.path))
+        {
             TutorialProgress.Completed = true;
+            // Preload the next random battle so the transition on level-clear is instant.
+            string next = PickRandomBattlePath();
+            if (!string.IsNullOrEmpty(next)) PreloadScene(next);
+        }
+        else
+        {
+            // Preload the next tutorial level if there is one.
+            int idx = TutorialIndexOf(scene.path);
+            if (idx >= 0 && idx + 1 < LevelScenes?.Length)
+            {
+                string nextPath = LevelScenes[idx + 1]?.ScenePath;
+                if (!string.IsNullOrEmpty(nextPath) && !IsBattleScene(nextPath))
+                    PreloadScene(nextPath);
+            }
+        }
+    }
+
+    // ── Preloading ────────────────────────────────────────────────────────────────
+
+    private void PreloadScene(string path)
+    {
+        if (string.IsNullOrEmpty(path) || path == _preloadedPath) return;
+        _preloadedPath = path;
+        _preloadedOp   = SceneManager.LoadSceneAsync(path);
+        if (_preloadedOp != null)
+            _preloadedOp.allowSceneActivation = false;
+    }
+
+    /// <summary>
+    /// Returns the preloaded AsyncOperation if it matches <paramref name="path"/>, and clears it.
+    /// Called by St_Gm_Transitioning to skip the load step when the scene is already in memory.
+    /// </summary>
+    public AsyncOperation TakePreloadedOp(string path)
+    {
+        if (_preloadedOp == null || _preloadedPath != path) return null;
+        var op      = _preloadedOp;
+        _preloadedOp   = null;
+        _preloadedPath = null;
+        return op;
     }
 
     /// <summary>
@@ -481,7 +523,11 @@ public class GameManager : StateMachine<GameManager>
     /// transition (level clear); fade=false loads directly (death reset, no transition).</summary>
     private void LoadRandomBattle(bool fade)
     {
-        string pick = PickRandomBattlePath();
+        // Prefer the already-preloaded battle so the transition activates an in-memory scene.
+        string pick = (!string.IsNullOrEmpty(_preloadedPath) && IsBattleScene(_preloadedPath))
+            ? _preloadedPath
+            : PickRandomBattlePath();
+
         if (string.IsNullOrEmpty(pick))
         {
             Debug.LogError("[GameManager] No 'Battle*' scenes found in Build Settings — add at least one.");

@@ -49,9 +49,15 @@ public abstract class St_Pl_Base : State<PlayerController>
 				}
 			};
 
+			// Dragging: only vulnerable once the player has physically moved away from the
+			// slingshot anchor. Check position vs. click origin so there is no LaunchForce
+			// lag on the first frame of a new drag.
+			bool pulledBack = Focus.Current is St_Pl_Dragging &&
+				((Vector2)Focus.transform.position - Focus.DragClickPosition).sqrMagnitude > 0.1f;
+
 			if (!enemyHarmless &&
 				(Focus.Current is St_Pl_Stopping
-				|| Focus.Current is St_Pl_Dragging
+				|| pulledBack
 				|| Focus.Current is St_Pl_Idle))
 			{
 				Focus.ShakeCamera();

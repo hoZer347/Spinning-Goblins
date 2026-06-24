@@ -10,9 +10,7 @@ using UnityEngine;
 ///                intensity that drives the spin sound's pitch and rate (charge while dragging,
 ///                speed while flying), so the wheel visibly speeds up and winds down with it.
 ///   • Hitstun  — while in the post-hit i-frame window; reverts once the i-frames end.
-/// While dragging it leans and stretches like a loaded slingshot — stretching along whichever axis
-/// the pull favours and tilting only off the nearest axis so the goblin never leans past 45°. The
-/// lean snaps back to upright the moment it launches. On a wall / enemy impact in flight it squashes
+/// While dragging it stretches horizontally like a loaded slingshot — always along X, never tilted. On a wall / enemy impact in flight it squashes
 /// and stretches off the contact normal. The sprite is never spun — it stays upright.
 /// </summary>
 public class PlayerSpriteAnimator : MonoBehaviour
@@ -113,43 +111,47 @@ public class PlayerSpriteAnimator : MonoBehaviour
             return;
         }
 
-        // Snap upright leaving the drag (the launch); flight and everything else stays level.
+        // Face the direction of travel while flying/stopping; snap to unflipped otherwise.
+        if (state is St_Pl_Flying || state is St_Pl_Stopping)
+            _renderer.flipX = _player.Rigidbody.linearVelocity.x < 0f;
+        else
+            _renderer.flipX = false;
         transform.localRotation = Quaternion.identity;
         UpdateImpactScale(state);
     }
 
-    // Rotates the sprite so its top (+Y) always faces the launch direction, and stretches
-    // along that axis like a loaded slingshot.
+    // Rotates the sprite so its side axis aligns with the pull line, then stretches along that axis.
     private void ApplyDragPose()
     {
         _squashTimer = _stretchTimer = 0f;
 
-        float   follow = ScaleSmoothing * Time.deltaTime;
-        Vector2 dir    = _player.LaunchForce;
+        float follow = ScaleSmoothing * Time.deltaTime;
 
-        if (dir.sqrMagnitude < 0.0001f)
+        if (_player.LaunchForce.sqrMagnitude < 0.0001f)
         {
             transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.identity, follow);
             transform.localScale    = Vector3.Lerp(transform.localScale, _baseScale, follow);
             return;
         }
 
-        dir.Normalize();
         float t      = _player.MaxLaunchPower > 0f
             ? Mathf.Clamp01(_player.LaunchForce.magnitude / _player.MaxLaunchPower)
             : 0f;
-
         float along  = 1f + t * DragStretch;
         float across = 1f / along;
 
-        // Rotate so the sprite's +Y points toward the launch direction (full 360°).
-        float tilt = -Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg;
+        // Rotate so the sprite's right side (+X) points along the launch direction.
+        // Mirror (flipX) when the angle would go past ±90° so the sprite is never upside-down.
+        float angle = Mathf.Atan2(_player.LaunchForce.y, _player.LaunchForce.x) * Mathf.Rad2Deg;
+        if (Mathf.Abs(angle) > 70f) { angle -= 180f; _renderer.flipX = true; }
+        else                        {                _renderer.flipX = false; }
 
-        // Stretch always along local Y (which now points toward the launch direction).
-        Vector3 target = new Vector3(_baseScale.x * across, _baseScale.y * along, _baseScale.z);
+        Quaternion targetRot = Quaternion.Euler(0f, 0f, angle);
+        transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRot, follow);
 
-        transform.localScale    = Vector3.Lerp(transform.localScale, target, follow);
-        transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(0f, 0f, tilt), follow);
+        // Stretch along local X (now aligned with the launch axis), compress Y.
+        Vector3 targetScale = new Vector3(_baseScale.x * along, _baseScale.y * across, _baseScale.z);
+        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, follow);
     }
 
     // Crush on a fresh wall / enemy contact while moving, then spring back through a stretch.

@@ -19,6 +19,7 @@ public class St_Pl_Dragging : St_Pl_Base
     {
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
+        Focus.LaunchForce = Vector2.zero;
         _origin        = Focus.transform.position;
         _lastMouse     = Mouse.current.position.ReadValue();
         _virtualScreen = _lastMouse;
