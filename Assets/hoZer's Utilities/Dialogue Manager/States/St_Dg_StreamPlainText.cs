@@ -26,7 +26,10 @@ namespace hoZer.Dialogue
 			if (duration.Tick())
 			{
 				duration.Reset(Focus.textSpeed);
-				Focus.TextMesh.text += text[amountStreamed++];
+
+				char c = text[amountStreamed++];
+				Focus.TextMesh.text += c;
+				Focus.Speak(c); // Banjo-Kazooie-style pitched blip per character
 			};
 
 			if (Keyboard.current.spaceKey.wasPressedThisFrame)

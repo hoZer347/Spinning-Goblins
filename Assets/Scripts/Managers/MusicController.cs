@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 
@@ -27,6 +28,7 @@ public class MusicController : MonoBehaviour
 
     private AudioSource _introSource;
     private AudioSource _loopSource;
+    private AudioLowPassFilter _lowPass;
 
     private void Awake()
     {
@@ -69,26 +71,39 @@ public class MusicController : MonoBehaviour
     /// <summary>Starts the intro→loop sequence, scheduling the loop to begin exactly as the intro ends.</summary>
     public void Play()
     {
-        // Force the clips fully resident BEFORE scheduling. They're DecompressOnLoad + Vorbis and, in a
-        // build, aren't preloaded by default — so without this the decompress can overrun the scheduled
-        // start, the intro slips in late, and it ends up playing on top of the loop (the song doubles).
-        // In the editor the clips are already in memory, which is why it only ever shows up in a build.
+        StopAllCoroutines();
+        ResetAudioFx();   // clear any lingering slow-down (pitch / muffle) so the new track plays clean
+        StartCoroutine(PlayRoutine());
+    }
+
+    private IEnumerator PlayRoutine()
+    {
+        // Make both clips fully RESIDENT before scheduling. They're DecompressOnLoad and, in a build,
+        // aren't decompressed yet when Awake runs — so scheduling immediately lets the decompress
+        // overrun the start, the intro slips in late, and it plays on top of the loop (the song
+        // doubles). LoadAudioData is asynchronous, so we must WAIT for it to finish, not just kick it
+        // off. (In the editor the clips are already in memory, which is why it only shows in a build.)
         if (intro != null) intro.LoadAudioData();
         if (loop  != null) loop.LoadAudioData();
+        while (Loading(intro) || Loading(loop)) yield return null;
 
         // Lead-in so both scheduled starts are armed before the DSP clock reaches them.
         double startTime = AudioSettings.dspTime + 0.2;
 
         if (intro != null)
         {
+            double loopStart = startTime + (double)intro.samples / intro.frequency;
+
             _introSource.clip = intro;
             _introSource.PlayScheduled(startTime);
+            // Hard-cap the intro's end exactly at the loop's start, so even if it ever begins late it
+            // can never bleed past the hand-off and double up with the loop.
+            _introSource.SetScheduledEndTime(loopStart);
 
-            double introLength = (double)intro.samples / intro.frequency;
             if (loop != null)
             {
                 _loopSource.clip = loop;
-                _loopSource.PlayScheduled(startTime + introLength);
+                _loopSource.PlayScheduled(loopStart);
             }
         }
         else if (loop != null)
@@ -98,11 +113,82 @@ public class MusicController : MonoBehaviour
         }
     }
 
+    private static bool Loading(AudioClip clip) =>
+        clip != null && clip.loadState == AudioDataLoadState.Loading;
+
     /// <summary>Stops both tracks — e.g. call from an outro/credits scene.</summary>
     public void StopMusic()
     {
         if (_introSource != null) _introSource.Stop();
         if (_loopSource  != null) _loopSource.Stop();
+    }
+
+    /// <summary>
+    /// Winds the music down like a powering-off tape — drops the pitch toward a halt while a lowpass
+    /// filter muffles it — then stops. Use instead of <see cref="StopMusic"/> when an abrupt cut would
+    /// feel jarring (e.g. the Beeg Dwarf cutscene). A later Play()/PlayTrack() clears the effect.
+    /// </summary>
+    public void SlowToStop(float duration = 1.5f)
+    {
+        StopAllCoroutines();
+        StartCoroutine(SlowToStopRoutine(Mathf.Max(0.01f, duration)));
+    }
+
+    private IEnumerator SlowToStopRoutine(float duration)
+    {
+        AudioLowPassFilter lp = LowPass();
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime; // wind down even if the scene is paused / time-scaled
+            float k = Mathf.Clamp01(t / duration);
+
+            float pitch = Mathf.Lerp(1f, 0.01f, k);            // slow the playback toward a halt
+            if (_introSource != null) _introSource.pitch = pitch;
+            if (_loopSource  != null) _loopSource.pitch  = pitch;
+
+            lp.cutoffFrequency = Mathf.Lerp(22000f, 300f, k);  // muffle it as it winds down
+
+            yield return null;
+        }
+
+        StopMusic();
+        ResetAudioFx();
+    }
+
+    // The lowpass used by the slow-down, created on demand. Sits fully open (≈no effect) the rest of
+    // the time, so leaving it on the object is harmless.
+    private AudioLowPassFilter LowPass()
+    {
+        if (_lowPass == null)
+        {
+            _lowPass = GetComponent<AudioLowPassFilter>();
+            if (_lowPass == null) _lowPass = gameObject.AddComponent<AudioLowPassFilter>();
+            _lowPass.cutoffFrequency = 22000f; // a fresh filter defaults to 5000Hz — open it so it's inert
+        }
+        return _lowPass;
+    }
+
+    // Clears any lingering slow-down: pitch back to normal and the lowpass fully open.
+    private void ResetAudioFx()
+    {
+        if (_introSource != null) _introSource.pitch = 1f;
+        if (_loopSource  != null) _loopSource.pitch  = 1f;
+        if (_lowPass     != null) _lowPass.cutoffFrequency = 22000f;
+    }
+
+    /// <summary>
+    /// Switches to a new track and starts it (optional one-shot <paramref name="newIntro"/>, then loops
+    /// <paramref name="newLoop"/> forever) — e.g. the Beeg Dwarf cutscene bringing up its battle theme as
+    /// it ends. Stops whatever was playing first so they can't overlap.
+    /// </summary>
+    public void PlayTrack(AudioClip newLoop, AudioClip newIntro = null)
+    {
+        StopMusic();
+        intro = newIntro;
+        loop  = newLoop;
+        Play();
     }
 
     private void OnDestroy()

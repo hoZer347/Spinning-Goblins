@@ -23,7 +23,8 @@ namespace hoZer
 		{
 			base.OnEnter(lastState);
 
-			ScoreUI.Instance?.AddKill(Focus.transform.position); // 100 for a normal kill (pit kills score in St_En1_Falling)
+			ScoreUI.Instance?.AddKill(Focus.killScore, Focus.transform.position); // per-enemy kill score (pit kills score in St_En1_Falling)
+			Focus.StopCounting(); // dead now — free its spawn slot immediately, not after the flash finishes
 			_life.Reset(Lifetime);
 			_flashTimer = 0f;
 		}

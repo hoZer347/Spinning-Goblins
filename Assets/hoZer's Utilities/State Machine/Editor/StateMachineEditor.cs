@@ -121,7 +121,6 @@ namespace hoZer
 
 			if (string.IsNullOrEmpty(text))
 			{
-				Debug.Log("State history is empty.", machine);
 
 				return;
 			};
@@ -138,7 +137,6 @@ namespace hoZer
 
 			EditorGUIUtility.PingObject(asset);
 
-			Debug.Log($"Flushed state history to {path}\n{text}", asset);
 		}
 	};
 };

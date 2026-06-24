@@ -115,7 +115,10 @@ namespace Tymski
 				sceneAsset = GetSceneAssetFromPath();
 				if (sceneAsset == null) scenePath = string.Empty;
 
-				EditorSceneManager.MarkAllScenesDirty();
+				// MarkAllScenesDirty throws "This cannot be used during play mode" — and serialization
+				// runs in play mode whenever a prefab holding a SceneReference is Instantiated (e.g.
+				// GameManager.AutoBootstrap). Guard it the same way HandleAfterDeserialize does.
+				if (!Application.isPlaying) EditorSceneManager.MarkAllScenesDirty();
 			}
 			// Asset takes precendence and overwrites Path
 			else

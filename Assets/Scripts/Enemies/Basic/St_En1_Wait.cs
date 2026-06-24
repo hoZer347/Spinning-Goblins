@@ -12,6 +12,9 @@ namespace hoZer
 		{
 			base.OnEnter(lastState);
 
+			// Idle on a Kinematic body so nothing can push us around while we stand still.
+			Focus.EnterAIMovement();
+
 			_waitUntilWander = new Duration(
 				UnityEngine.Random.Range(
 					Focus.wanderWaitMin,
@@ -22,12 +25,19 @@ namespace hoZer
 		{
 			base.OnUpdate();
 
+			// A Beeg Dwarf charges a spin the instant the player wanders into spin-detect range.
+			if (Focus.WantsSpinAttack())
+			{
+				SetState<St_En1_SpinWindup>();
+				return;
+			}
+
 			if (_waitUntilWander.Tick())
 				SetState<St_En1_Wander>();
 
-			if (Vector3.Distance(
+			if (Vector2.Distance(
 					Focus.transform.position,
-					Focus.playerController.transform.position)
+					Focus.playerController.Position)
 				<= Focus.detectionRadius)
 				SetState<St_En1_Approach>();
 		}

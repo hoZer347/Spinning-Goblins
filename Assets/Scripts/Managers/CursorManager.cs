@@ -107,7 +107,10 @@ public class CursorManager : MonoBehaviour
 
             if (isDragging)
             {
-                _screenPos    = _cam.WorldToScreenPoint(_player.transform.position);
+                // Follow the goblin where it's DRAWN (the Sprite child), not the root — during a drag the
+                // root stays at the origin while only the sprite is pulled back, so transform.position
+                // would leave the cursor stuck at the origin. Position is the sprite's world position.
+                _screenPos    = _cam.WorldToScreenPoint(_player.Position);
                 _image.sprite = DragSprite != null ? DragSprite : NormalSprite;
             }
             else

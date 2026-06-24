@@ -18,6 +18,12 @@ namespace hoZer
 		Vector3 originalPosition;
 		public Vector3 OriginalPosition => originalPosition;
 
+		/// <summary>
+		/// Triggers a one-off shake with a custom magnitude / duration — e.g. the big Beeg Dwarf landing
+		/// impact. Leaves the serialized defaults (used by the normal hit shake) untouched.
+		/// </summary>
+		public void Shake(float amount, float time) => SetState(new St_Cm_Shake(amount, time));
+
 		protected override void OnStart()
 		{
 			base.OnStart();

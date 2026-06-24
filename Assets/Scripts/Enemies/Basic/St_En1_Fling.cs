@@ -23,8 +23,7 @@ namespace hoZer
 			Focus.rigidbody.linearVelocity = Focus.flingDirection * Focus.flingSpeed;
 			Focus.flingReadyAt = Time.time + Focus.flingCooldown;
 
-			if (Focus.audioSource != null && Focus.hitstunSound != null)
-				Focus.audioSource.PlayOneShot(Focus.hitstunSound, 0.3f);
+			SfxManager.Play(Focus.hitstunSound, 0.3f);
 		}
 
 		public override void OnUpdate()

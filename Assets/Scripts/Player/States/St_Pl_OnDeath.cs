@@ -20,10 +20,6 @@ public class St_Pl_OnDeath : St_Pl_Base
         Focus.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
         Focus.Rigidbody.linearVelocity = Vector2.zero;
 
-        // Report this run's score to the global leaderboard (a no-op if Leaderboard isn't configured).
-        int score = ScoreUI.Instance != null ? ScoreUI.Instance.Score : 0;
-        Leaderboard.Submit(PlayerPrefs.GetString("PlayerName", "Player"), score);
-
         _resetting = false;
         _reset.Reset(ResetDelay);
     }

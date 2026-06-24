@@ -43,6 +43,21 @@ namespace hoZer.Dialogue
 		/// </summary>
 		[SerializeField] TextMeshProUGUI _continueText;
 
+		[Header("Voice (Banjo-Kazooie style)")]
+		[Tooltip("Short blip played, pitched randomly, as each character streams in. Leave empty for silent text.")]
+		[SerializeField] AudioClip _voiceClip;
+		[Range(0f, 1f)] [SerializeField] float _voiceVolume = 0.5f;
+		[Tooltip("Random pitch range for each blip — the wider the gap, the more babble-like the voice.")]
+		[SerializeField] float _voicePitchMin = 0.85f;
+		[SerializeField] float _voicePitchMax = 1.25f;
+		[Tooltip("Play a blip every Nth visible character (1 = every character). Raise it to thin out fast text.")]
+		[Min(1)] [SerializeField] int _voiceEvery = 2;
+
+		// Dedicated runtime source so the per-blip pitch changes never bend any other audio. Created in
+		// OnStart only when a clip is assigned. Counter paces the "every Nth character" blips.
+		AudioSource _voiceSource;
+		int         _voiceCharCount;
+
 		/// <summary>
 		/// The TextMeshProUGUI component that this DialogueManager will stream text to.
 		/// </summary>
@@ -67,6 +82,23 @@ namespace hoZer.Dialogue
 		/// Trigger this to begin the dialogue.
 		/// </summary>
 		public void Begin() => Proceed();
+
+		/// <summary>
+		/// Plays one randomly-pitched voice blip for a streamed character — the Banjo-Kazooie babble.
+		/// Whitespace is silent, and only every Nth visible character blips. No-op until a clip is assigned.
+		/// </summary>
+		public void Speak(char c)
+		{
+			if (_voiceClip == null || _voiceSource == null || char.IsWhiteSpace(c))
+				return;
+
+			// Pace the blips: sound on every _voiceEvery-th visible character.
+			if (_voiceCharCount++ % Mathf.Max(1, _voiceEvery) != 0)
+				return;
+
+			_voiceSource.pitch = UnityEngine.Random.Range(_voicePitchMin, _voicePitchMax);
+			_voiceSource.PlayOneShot(_voiceClip, _voiceVolume);
+		}
 
 		#region Default Bindings
 
@@ -195,15 +227,36 @@ namespace hoZer.Dialogue
 
 			_continueText.gameObject.SetActive(false);
 
-			foreach (MethodInfo method in GetType().GetMethods(MethodFlags))
+			// A dedicated 2D source for the streaming voice blips, so their random per-blip pitch never
+			// bends any other audio. Only created when a voice clip is assigned.
+			if (_voiceClip != null && _voiceSource == null)
 			{
-				DialogueBindingAttribute attr = method.GetCustomAttribute<DialogueBindingAttribute>();
+				_voiceSource = gameObject.AddComponent<AudioSource>();
+				_voiceSource.playOnAwake  = false;
+				_voiceSource.spatialBlend = 0f; // 2D — full volume regardless of position
+			}
+			_voiceCharCount = 0;
 
-				if (attr == null)
-					continue;
+			// Collect this manager's type chain down to DialogueManager. Walking the hierarchy with
+			// DeclaredOnly is what makes inheritance work: GetMethods does not surface a base class's
+			// PRIVATE bindings for a derived instance, so a subclass would otherwise silently lose the
+			// defaults (Pause / TextSpeed / ...).
+			List<Type> chain = new();
+			for (Type type = GetType(); type != null && typeof(DialogueManager).IsAssignableFrom(type); type = type.BaseType)
+				chain.Add(type);
 
-				_bindings[attr.Name ?? method.Name] = method;
-			};
+			// Register base-first so a derived [DialogueBinding] overrides a base one of the same name,
+			// while keeping the original "last declared wins" among same-name overloads within a type.
+			for (int i = chain.Count - 1; i >= 0; i--)
+				foreach (MethodInfo method in chain[i].GetMethods(MethodFlags | BindingFlags.DeclaredOnly))
+				{
+					DialogueBindingAttribute attr = method.GetCustomAttribute<DialogueBindingAttribute>();
+
+					if (attr == null)
+						continue;
+
+					_bindings[attr.Name ?? method.Name] = method;
+				};
 
 			string[] splits = TokenRegex.Split(_script.text);
 

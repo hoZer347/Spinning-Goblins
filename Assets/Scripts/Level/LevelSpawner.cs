@@ -17,7 +17,7 @@ public class LevelSpawner : MonoBehaviour
     private void Start()
     {
         if (GameManager.Instance == null)      { Debug.LogWarning("[LevelSpawner] No GameManager found.");         return; }
-        if (!GameManager.Instance.IsEndlessMode) { Debug.Log("[LevelSpawner] Not in endless mode — skipping spawn."); return; }
+        if (!GameManager.Instance.IsEndlessMode) { return; }
         SpawnEnemies(GameManager.Instance.CurrentEnemyBudget);
     }
 
@@ -27,7 +27,6 @@ public class LevelSpawner : MonoBehaviour
             ? EnemyPoolOverride
             : GameManager.Instance?.EnemyPool;
 
-        Debug.Log($"[LevelSpawner] budget={budget}, pool={pool?.Length ?? 0}, points={SpawnPoints?.Length ?? 0}");
 
         if (SpawnPoints == null || SpawnPoints.Length == 0) { Debug.LogWarning("[LevelSpawner] No SpawnPoints assigned.");      return; }
         if (pool        == null || pool.Length        == 0) { Debug.LogWarning("[LevelSpawner] No enemies in pool (set EnemyPool on GameManager or EnemyPoolOverride here)."); return; }

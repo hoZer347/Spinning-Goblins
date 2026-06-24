@@ -81,6 +81,7 @@ MonoBehaviour:
   fallingDuration: 1
   spawnCost: 1
   maxHealth: 3
+  killScore: 100
   damageCooldown: 0.25
   healthBarHeight: 0.6
   audioSource: {fileID: 1169152603132774089}

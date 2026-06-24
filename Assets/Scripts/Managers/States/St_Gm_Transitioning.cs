@@ -20,7 +20,6 @@ public class St_Gm_Transitioning : State<GameManager>
 
 	private IEnumerator TransitionRoutine()
 	{
-		Debug.Log($"[St_Gm_Transitioning] Starting transition to: {Focus.PendingScenePath} | swiper={(Focus.Swiper != null ? "OK" : "NULL")} fader={(Focus.Fader != null ? "OK" : "NULL")}");
 
 		// Begin loading the next scene in the background straight away, but hold activation so the
 		// current scene stays live and visible while it loads.
@@ -37,7 +36,6 @@ public class St_Gm_Transitioning : State<GameManager>
 		// concurrently with the background load above.
 		if (Focus.Swiper != null)
 		{
-			Debug.Log("[St_Gm_Transitioning] SwipeIn...");
 			yield return Focus.StartCoroutine(Focus.Swiper.SwipeIn());
 		}
 		else if (Focus.Fader != null)

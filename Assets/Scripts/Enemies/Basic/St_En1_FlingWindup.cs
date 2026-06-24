@@ -24,7 +24,7 @@ namespace hoZer
 
 			// Lock the lunge direction at the start of the wind-up (a committed, dodgeable attack).
 			Focus.flingDirection =
-				((Vector2)Focus.playerController.transform.position
+				(Focus.playerController.Position
 				 - (Vector2)Focus.transform.position).normalized;
 		}
 

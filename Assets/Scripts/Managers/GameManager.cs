@@ -194,7 +194,6 @@ public class GameManager : StateMachine<GameManager>
             return;
         }
 
-        Debug.Log($"[GameManager] SpawnEnemies — budget={CurrentEnemyBudget}, spawners={spawners.Length}, pool={EnemyPool.Length}");
 
         if (CurrentEnemyBudget <= 0f)
         {
@@ -225,7 +224,6 @@ public class GameManager : StateMachine<GameManager>
             spawned++;
         }
 
-        Debug.Log($"[GameManager] Spawned {spawned} enemies.");
     }
 
     protected override void OnStart() => SetState<St_Gm_Idle>();
@@ -392,18 +390,15 @@ public class GameManager : StateMachine<GameManager>
     {
         if (CurrentSceneState != SceneState.Cutscene)
         {
-            Debug.Log($"[GameManager] OnCutsceneComplete → ignored (state={CurrentSceneState}, not in a cutscene scene).");
             return;
         }
 
         if (!IsEndlessMode)
         {
-            Debug.Log("[GameManager] OnCutsceneComplete → starting tutorial from level 0.");
             LoadLevel(0);
         }
         else
         {
-            Debug.Log("[GameManager] OnCutsceneComplete → returning to main menu.");
             LoadMainMenu();
         }
     }
