@@ -30825,26 +30825,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2746984586713190977, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
-      propertyPath: enemies.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2746984586713190977, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
-      propertyPath: enemies.Array.data[2].cost
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2746984586713190977, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
-      propertyPath: enemies.Array.data[2].prefab
-      value: 
-      objectReference: {fileID: 9211126048354776017, guid: f7ffb6791a42f474caad62c5ba7a11e3, type: 3}
-    - target: {fileID: 2746984586713190977, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
-      propertyPath: enemies.Array.data[2].weight
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2746984586713190977, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
-      propertyPath: enemies.Array.data[2].availableAfter
-      value: 30
-      objectReference: {fileID: 0}
     - target: {fileID: 5162438527689833794, guid: 8460e705ba9b14942b63243f9bab39d9, type: 3}
       propertyPath: m_Name
       value: Enemy Spawner

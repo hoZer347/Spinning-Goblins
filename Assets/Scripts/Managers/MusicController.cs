@@ -105,6 +105,23 @@ public class MusicController : MonoBehaviour
         if (_loopSource  != null) _loopSource.volume  = v;
     }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // WebGL suspends the WebAudio context when the canvas loses focus, and on REGAIN it can resume the
+    // looping source as a SECOND node stacked on the one already playing — so the music overlays and
+    // stacks every time you click off the page and back. Pausing the sources on blur (so there's no live
+    // node for the resume to duplicate) and unpausing on focus keeps playback to a single node, and
+    // preserves position/pitch so the death-music slow-down isn't disturbed. Editor/standalone don't do
+    // this, so it's web-only. WebGL fires focus and/or pause depending on the browser — handle both.
+    private void OnApplicationFocus(bool hasFocus) => SetSourcesPaused(!hasFocus);
+    private void OnApplicationPause(bool paused)   => SetSourcesPaused(paused);
+
+    private void SetSourcesPaused(bool paused)
+    {
+        if (_introSource != null) { if (paused) _introSource.Pause(); else _introSource.UnPause(); }
+        if (_loopSource  != null) { if (paused) _loopSource.Pause();  else _loopSource.UnPause();  }
+    }
+#endif
+
     /// <summary>Plays the intro once (if any), then starts the main track looping.</summary>
     public void Play()
     {
