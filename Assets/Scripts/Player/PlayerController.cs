@@ -223,7 +223,7 @@ public class PlayerController : StateMachine<PlayerController>
 	protected override void OnUpdate()
 	{
 		if (!IsInvulnerable && IsCenterOverExit())
-			GameManager.Instance?.RestartLevel();
+			GameManager.Instance?.LoadNextLevel();
 
 		// Clearing the arena no longer auto-advances the level here — an AllEnemyDeadSceneTrans
 		// behaviour in the scene owns that decision, so the player doesn't force a transition.
@@ -329,6 +329,17 @@ public class PlayerController : StateMachine<PlayerController>
 		_health = Mathf.Max(0, _health - 1);
 		if (_healthBar != null) _healthBar.SetHealth(_health);
 		return _health <= 0;
+	}
+
+	/// <summary>
+	/// Restores one health dot (called by HealthPickup). No-op when the health bar is
+	/// disabled or the player is already at full health.
+	/// </summary>
+	public void RestoreHealth()
+	{
+		if (!UseHealthBar) return;
+		_health = Mathf.Min(MaxHealth, _health + 1);
+		if (_healthBar != null) _healthBar.SetHealth(_health);
 	}
 
 	/// <summary>

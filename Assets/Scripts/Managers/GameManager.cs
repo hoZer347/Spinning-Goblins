@@ -415,7 +415,7 @@ public class GameManager : StateMachine<GameManager>
     public void OnPlayerDied()
     {
         if (IsBattleScene(SceneManager.GetActiveScene().path))
-            LoadRandomBattle(fade: false);
+            LoadRandomBattle(fade: true);
         else
             ReloadActiveScene();
     }

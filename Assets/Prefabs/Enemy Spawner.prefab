@@ -53,6 +53,10 @@ MonoBehaviour:
     weight: 0.1
     cost: 1
     availableAfter: 30
+  - prefab: {fileID: 9211126048354776017, guid: f7ffb6791a42f474caad62c5ba7a11e3, type: 3}
+    weight: 0.1
+    cost: 1
+    availableAfter: 30
   budget: 10
   spawnInterval: 2.5
   maxAlive: 8
