@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using hoZer.Dialogue;
 
 /// <summary>
@@ -24,6 +25,9 @@ public class PersistentDialogue : MonoBehaviour
     [SerializeField] GameObject dialogueRoot;
     [Tooltip("The dialogue manager that drives the cutscene — lives under dialogueRoot.")]
     [SerializeField] BeegDwarfDialogueManager dialogue;
+
+    /// <summary>True while the cutscene dialogue UI is on screen (i.e. a cutscene is in progress).</summary>
+    public bool IsShowing => dialogueRoot != null && dialogueRoot.activeSelf;
 
     // Resources path of the prefab auto-loaded at startup (this component lives on its root).
     const string ResourcePath = "Persistent Dialogue";
@@ -60,13 +64,23 @@ public class PersistentDialogue : MonoBehaviour
         transform.SetParent(null);   // be a root object so DontDestroyOnLoad reliably persists us
         DontDestroyOnLoad(gameObject);
 
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         Hide();                      // dormant in every scene until the cutscene shows it
     }
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instance = null;
+        }
     }
+
+    // A cutscene never spans a scene load, so any dialogue still up on a fresh scene is stale — e.g. the
+    // player died right as the cutscene started and the scene reloaded with the box left open. Put it away.
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Hide();
 
     /// <summary>Reveals the dialogue UI and returns its manager so the caller can drive it.</summary>
     public BeegDwarfDialogueManager Show()

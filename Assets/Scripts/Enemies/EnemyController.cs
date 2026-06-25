@@ -115,23 +115,37 @@ namespace hoZer
 		/// </summary>
 		public static int AliveCount { get; private set; }
 
-		bool _countedAlive;
+		/// <summary>
+		/// Summed <see cref="spawnCost"/> of every live enemy. The spawner's budget caps THIS — the cost
+		/// of what's alive right now — refunded the instant an enemy dies, so the spawner keeps refilling
+		/// the arena instead of spending a one-way total down to zero and never spawning again.
+		/// </summary>
+		public static float AliveCost { get; private set; }
+
+		bool  _countedAlive;
+		float _countedCost;   // the spawnCost we added to AliveCost, refunded exactly once
 
 		/// <summary>
-		/// Drops this enemy out of <see cref="AliveCount"/> exactly once — called the moment it dies
-		/// (entering Death/Falling) so a kill frees a spawn slot immediately, with OnDestroy as a backstop
-		/// for any other way it leaves (cutscene knock-off, scene unload). The flag prevents a double count.
+		/// Drops this enemy out of <see cref="AliveCount"/> / <see cref="AliveCost"/> exactly once — called
+		/// the moment it dies (entering Death/Falling) so a kill frees a spawn slot and budget immediately,
+		/// with OnDestroy as a backstop for any other exit (cutscene knock-off, scene unload). The flag
+		/// prevents a double count.
 		/// </summary>
 		public void StopCounting()
 		{
 			if (!_countedAlive) return;
 			_countedAlive = false;
 			AliveCount = Mathf.Max(0, AliveCount - 1);
+			AliveCost  = Mathf.Max(0f, AliveCost - _countedCost);
 		}
 
-		// Zero the static tally at the start of every play session, even with editor Domain Reload off.
+		// Zero the static tallies at the start of every play session, even with editor Domain Reload off.
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-		static void ResetAliveCount() => AliveCount = 0;
+		static void ResetAliveTallies()
+		{
+			AliveCount = 0;
+			AliveCost  = 0f;
+		}
 
 		[Header("Audio Settings")]
 		[SerializeField] public AudioSource			audioSource;
@@ -419,9 +433,11 @@ namespace hoZer
 
 			_prevCenter = collider != null ? (Vector2)collider.bounds.center : (Vector2)transform.position;
 
-			// Join the live tally — decremented the moment we die (Death/Falling) or, failing that, on destroy.
+			// Join the live tallies — refunded the moment we die (Death/Falling) or, failing that, on destroy.
 			_countedAlive = true;
+			_countedCost  = spawnCost;
 			AliveCount++;
+			AliveCost += _countedCost;
 		}
 
 		// Backstop for the live tally: catches an enemy removed without going through a death state (e.g.

@@ -17,6 +17,24 @@ public class MusicController : MonoBehaviour
 {
     public static MusicController Instance { get; private set; }
 
+    // Spawn the one persistent instance from Resources before the first scene loads — like the
+    // GameManager — so it's present no matter which scene the game launches from (no need to place a
+    // copy in every scene). The prefab lives at Assets/Resources/Music Controller.prefab.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Bootstrap()
+    {
+        if (Instance != null) return;
+
+        var prefab = Resources.Load<MusicController>("Music Controller");
+        if (prefab == null)
+        {
+            Debug.LogWarning("[MusicController] No prefab at Resources/Music Controller — no background music.");
+            return;
+        }
+
+        Instantiate(prefab);
+    }
+
     [Header("Tracks")]
     [Tooltip("Optional one-shot played once before the loop. Leave empty to start looping immediately.")]
     public AudioClip intro;
@@ -125,16 +143,20 @@ public class MusicController : MonoBehaviour
 
     /// <summary>
     /// Winds the music down like a powering-off tape — drops the pitch toward a halt while a lowpass
-    /// filter muffles it — then stops. Use instead of <see cref="StopMusic"/> when an abrupt cut would
-    /// feel jarring (e.g. the Beeg Dwarf cutscene). A later Play()/PlayTrack() clears the effect.
+    /// filter muffles it. Use instead of <see cref="StopMusic"/> when an abrupt cut would feel jarring
+    /// (e.g. the Beeg Dwarf cutscene). A later Play()/PlayTrack() clears the effect.
+    ///
+    /// With <paramref name="stopWhenDone"/> false (e.g. on player death) it leaves the slowed track quietly
+    /// playing rather than stopping, so a later <see cref="SpeedUp"/> can ramp it straight back up from
+    /// where it stalled — no re-scheduling, no gap.
     /// </summary>
-    public void SlowToStop(float duration = 1.5f)
+    public void SlowToStop(float duration = 1.5f, bool stopWhenDone = true)
     {
         StopAllCoroutines();
-        StartCoroutine(SlowToStopRoutine(Mathf.Max(0.01f, duration)));
+        StartCoroutine(SlowToStopRoutine(Mathf.Max(0.01f, duration), stopWhenDone));
     }
 
-    private IEnumerator SlowToStopRoutine(float duration)
+    private IEnumerator SlowToStopRoutine(float duration, bool stopWhenDone)
     {
         AudioLowPassFilter lp = LowPass();
 
@@ -153,7 +175,47 @@ public class MusicController : MonoBehaviour
             yield return null;
         }
 
-        StopMusic();
+        // Stop dead and clear the effect — unless we're meant to stay quietly playing at the slowed pitch
+        // so a later SpeedUp can wind us straight back up.
+        if (stopWhenDone)
+        {
+            StopMusic();
+            ResetAudioFx();
+        }
+    }
+
+    /// <summary>
+    /// Winds the music back UP like a tape spinning to speed — ramps the pitch from wherever it stalled
+    /// back to normal while the lowpass re-opens. Pairs with <see cref="SlowToStop"/>(stopWhenDone: false).
+    /// </summary>
+    public void SpeedUp(float duration = 1.5f)
+    {
+        StopAllCoroutines();
+        StartCoroutine(SpeedUpRoutine(Mathf.Max(0.01f, duration)));
+    }
+
+    private IEnumerator SpeedUpRoutine(float duration)
+    {
+        AudioLowPassFilter lp = LowPass();
+
+        float startPitch  = _loopSource != null ? _loopSource.pitch : 0.01f;
+        float startCutoff = lp.cutoffFrequency;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(t / duration);
+
+            float pitch = Mathf.Lerp(startPitch, 1f, k);
+            if (_introSource != null) _introSource.pitch = pitch;
+            if (_loopSource  != null) _loopSource.pitch  = pitch;
+
+            lp.cutoffFrequency = Mathf.Lerp(startCutoff, 22000f, k);
+
+            yield return null;
+        }
+
         ResetAudioFx();
     }
 

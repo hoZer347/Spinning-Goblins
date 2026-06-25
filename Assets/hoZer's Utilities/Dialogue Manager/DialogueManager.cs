@@ -79,9 +79,29 @@ namespace hoZer.Dialogue
 		public float textSpeed => _textSpeed;
 
 		/// <summary>
-		/// Trigger this to begin the dialogue.
+		/// True once the wiring is validated and the bindings are built (see <see cref="Build"/>) — i.e. the
+		/// manager can stream. <see cref="Begin"/> ensures this itself, so callers don't have to wait for it.
 		/// </summary>
-		public void Begin() => Proceed();
+		public bool IsReady { get; private set; }
+
+		// True once Begin() has driven the dialogue, so OnStart (which may run a frame later) won't re-queue
+		// over a manually-started dialogue.
+		bool _begun;
+
+		/// <summary>
+		/// Starts the dialogue from the top. It (re)builds the setup if needed and ALWAYS re-fills the state
+		/// queue straight from the script, so it streams the full text every time — regardless of whether it
+		/// was parsed yet, already played, or left half-consumed by a prior run. Safe to call repeatedly.
+		/// </summary>
+		public void Begin()
+		{
+			Build();               // validate wiring + build bindings (no-op once ready)
+			if (!IsReady) return;  // bad setup — already logged; nothing to show
+
+			_begun = true;
+			QueueScript();         // a FRESH full queue every call, so the text always streams
+			Proceed();
+		}
 
 		/// <summary>
 		/// Plays one randomly-pitched voice blip for a streamed character — the Banjo-Kazooie babble.
@@ -181,10 +201,28 @@ namespace hoZer.Dialogue
 		}
 
 		/// <summary>
-		/// Initializes Bindings and Queues States based on the provided script.
+		/// Validates the wiring + builds the bindings, then queues the script. The queue is filled here for
+		/// an auto-begin dialogue (a non-empty Start State); <see cref="Begin"/> re-fills it every time it's
+		/// called, so a manually-started dialogue always streams its text no matter what a prior run left
+		/// behind.
 		/// </summary>
 		protected override void OnStart()
 		{
+			Build();
+			// Fill the queue for an auto-begin dialogue (non-empty Start State). Skip it if Begin() already
+			// drove the dialogue (it ran before us), so we never clobber a manual start mid-stream.
+			if (IsReady && !_begun) QueueScript();
+		}
+
+		/// <summary>
+		/// One-time setup: verify the wiring, build the binding table, create the voice source. Safe to call
+		/// again — it no-ops once <see cref="IsReady"/>, so <see cref="Begin"/> can call it to cover being
+		/// invoked before OnStart ever ran.
+		/// </summary>
+		void Build()
+		{
+			if (IsReady) return;
+
 			#region Setup Checks
 
 			if (_dialogueBox == null)
@@ -217,15 +255,7 @@ namespace hoZer.Dialogue
 
 			#endregion
 
-			#region Initializing Bindings and Queueing States
-
 			base.OnStart();
-
-			_textSpeed = _startingTextSpeed;
-
-			_dialogueBox.text = string.Empty;
-
-			_continueText.gameObject.SetActive(false);
 
 			// A dedicated 2D source for the streaming voice blips, so their random per-blip pitch never
 			// bends any other audio. Only created when a voice clip is assigned.
@@ -235,7 +265,6 @@ namespace hoZer.Dialogue
 				_voiceSource.playOnAwake  = false;
 				_voiceSource.spatialBlend = 0f; // 2D — full volume regardless of position
 			}
-			_voiceCharCount = 0;
 
 			// Collect this manager's type chain down to DialogueManager. Walking the hierarchy with
 			// DeclaredOnly is what makes inheritance work: GetMethods does not surface a base class's
@@ -258,6 +287,24 @@ namespace hoZer.Dialogue
 					_bindings[attr.Name ?? method.Name] = method;
 				};
 
+			// Wiring is good and the bindings are built — Begin() is now safe.
+			IsReady = true;
+		}
+
+		/// <summary>
+		/// Resets the display and (re)fills the state queue straight from the script — the heart of "always
+		/// show the text". Run fresh on every <see cref="Begin"/>, so a queue left empty or half-played by a
+		/// prior run (or an auto-begin, or a separate copy in the scene) can never leave the box blank.
+		/// </summary>
+		void QueueScript()
+		{
+			_textSpeed = _startingTextSpeed;
+			_dialogueBox.text = string.Empty;
+			_continueText.gameObject.SetActive(false);
+			_voiceCharCount = 0;
+
+			Clear(); // drop any leftover queued states before re-parsing
+
 			string[] splits = TokenRegex.Split(_script.text);
 
 			foreach (string split in splits)
@@ -279,8 +326,6 @@ namespace hoZer.Dialogue
 			};
 
 			Push<St_Dg_DialogueEnd>();
-
-			#endregion
 		}
 
 		/// <summary>

@@ -42,11 +42,12 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
     [SerializeField] float dropMargin = 2f;
 
     [Header("Landing Spot")]
-    [Tooltip("The dwarf drops onto a random point in this vertical band of the screen (viewport Y: 0 = bottom, 1 = top).")]
-    [SerializeField] Vector2 landViewportY = new Vector2(0.62f, 0.85f);
+    [Tooltip("The dwarf drops onto a random point in this vertical band of the screen (viewport Y: 0 = bottom, " +
+        "1 = top). Default 0.4-0.9 keeps it out of the bottom 40% but otherwise gives plenty of leeway.")]
+    [SerializeField] Vector2 landViewportY = new Vector2(0.4f, 0.9f);
     [Tooltip("Keep the landing spot at least this far from the player.")]
     [SerializeField] float landMinPlayerDistance = 8f;
-    [Tooltip("Required clear radius at the landing spot — rejects points on pits, spikes, or walls.")]
+    [Tooltip("Required clear radius at the landing spot — rejects points on pits, spikes, or walls (but NOT enemies).")]
     [SerializeField] float landClearRadius = 1f;
 
     [Header("Landing Impact")]
@@ -83,9 +84,31 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
     /// </summary>
     public static bool SpawningBlocked => _cutsceneDwarf != null;
 
-    // Clear the static at each play-session start, even with editor Domain Reload off.
+    // The id of the cutscene currently/last running, so RescueIfInterrupted can roll back the right flag.
+    static string _activeId;
+
+    // Clear the statics at each play-session start, even with editor Domain Reload off.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetCutsceneDwarf() => _cutsceneDwarf = null;
+    static void ResetStatics()
+    {
+        _cutsceneDwarf = null;
+        _activeId      = null;
+    }
+
+    /// <summary>
+    /// Death-during-cutscene rescue: if the intro is still mid-run (its dialogue is on screen) when the
+    /// player dies — they died riiight as the Beeg Dwarf appeared — roll back the one-shot flag so the
+    /// cutscene isn't lost; it plays again the next time a Beeg Dwarf spawns. (The dialogue box itself is
+    /// tidied separately by PersistentDialogue, which hides on scene load.) A clean completion hides the
+    /// dialogue first, so this is a no-op then.
+    /// </summary>
+    public static void RescueIfInterrupted()
+    {
+        if (string.IsNullOrEmpty(_activeId)) return;
+        if (PersistentDialogue.Instance == null || !PersistentDialogue.Instance.IsShowing) return;
+
+        FirstTimeMemory.Reset(_activeId);
+    }
 
     void Start()
     {
@@ -98,6 +121,7 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
         }
 
         FirstTimeMemory.MarkRun(id);
+        _activeId = id; // remember which flag to roll back if the player dies mid-cutscene
         _dwarf = GetComponent<EnemyController>();
 
         // Boss moment begins now — spawning pauses while this dwarf lives (auto-resumes when it dies,
@@ -118,8 +142,15 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
         // Pick the landing spot — high on the screen, away from the player — then lift the dwarf above the
         // screen over that spot THIS frame. StartCoroutine runs synchronously up to the first yield, so this
         // happens before the first render and the dwarf never flashes at its landing spot.
-        Vector3 land  = LandingSpot();
+        Vector3 land  = LandingSpot();   // chosen with pits ON, so it still avoids them
         Vector3 start = AboveScreen(land);
+
+        // Switch the pit colliders OFF for the whole cutscene — re-enabled on exit (below) and, as a
+        // backstop, by the dialogue's OnDisable/OnDestroy. The frozen world still runs every enemy's
+        // OnPhysics (the pump calls it even while a machine is disabled), and teleporting the dwarf above
+        // the screen draws a swept pit-crossing line from its old spot up to here: cross an edge pit and
+        // the boss falls, is destroyed, and takes this coroutine — and the whole cutscene — down with it.
+        CutscenePits.Disable();
 
         if (_dwarf != null)
         {
@@ -138,11 +169,12 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
         CameraController  camera = FindAnyObjectByType<CameraController>();
         PlayerController  player = FindAnyObjectByType<PlayerController>();
 
-        // Reveal the persistent (DontDestroyOnLoad) dialogue object — showing it now gives its manager a
-        // frame to parse its script before we Begin() it after the drop. Fall back to an inspector-wired
-        // reference, then to one placed directly in the scene (e.g. the Debug scene).
+        // Reveal the dialogue object. Prefer the persistent (DontDestroyOnLoad) one and SHOW it; otherwise
+        // find any manager in the scene — INCLUDING a hidden/inactive one, which a default find would skip —
+        // and make sure it's active so it can stream. This must succeed however the scene was reached.
         if (dialogue == null && PersistentDialogue.Instance != null) dialogue = PersistentDialogue.Instance.Show();
-        if (dialogue == null) dialogue = FindAnyObjectByType<BeegDwarfDialogueManager>();
+        if (dialogue == null) dialogue = FindAnyObjectByType<BeegDwarfDialogueManager>(FindObjectsInactive.Include);
+        if (dialogue != null && !dialogue.gameObject.activeInHierarchy) dialogue.gameObject.SetActive(true);
 
         // Hold the world still for the whole sequence. The camera and the dialogue manager stay live so
         // the drop, the landing shake, and the dialogue all still play — and so does the PLAYER, which we
@@ -166,17 +198,31 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
 
         if (dialogue != null)
         {
+            // Make sure it's actually on screen right before we drive it — nothing in the cutscene should
+            // have hidden it, but a stray scene transition or a missed Show() would leave Begin() invisible.
+            if (PersistentDialogue.Instance != null) PersistentDialogue.Instance.Show();
+            else if (!dialogue.gameObject.activeInHierarchy) dialogue.gameObject.SetActive(true);
+
             dialogue.Dwarf         = _dwarf;
             dialogue.Player        = player;        // [Done] returns it to Idle when the dialogue ends
-            dialogue.EndMusicIntro = endMusicIntro; // the manager brings the song up at [Done]
+            dialogue.EndMusicIntro = endMusicIntro; // the script plays the song itself via [PlayMusic]
             dialogue.EndMusicLoop  = endMusicLoop;
+
+            // Begin() validates its own wiring and ALWAYS re-queues the script fresh, so it streams the full
+            // text no matter what state the manager was in (just shown, already parsed, half-played by a
+            // prior run). It only no-ops on broken wiring — in which case IsReady stays false below.
             dialogue.Begin();                       // [Done] thaws everything when the dialogue ends
         }
-        else
+
+        if (dialogue == null || !dialogue.IsReady)
         {
-            CutsceneFreeze.ThawAll();                       // no cutscene wired — resume gameplay
-            if (player != null) player.SetState<St_Pl_Idle>(); // ...let the held player act again
-            PlayEndMusic();                                 // ...and bring the new song up now
+            // No usable dialogue (none found, or its wiring is broken) — resume gameplay rather than
+            // soft-lock behind a frozen world and a blank box. ([Done] re-enables the pits via the
+            // dialogue's OnDisable when there IS a dialogue; here there's none to hide, so do it directly.)
+            CutscenePits.Enable();
+            CutsceneFreeze.ThawAll();
+            if (player != null) player.SetState<St_Pl_Idle>();
+            PlayEndMusic();
         }
     }
 
@@ -186,10 +232,11 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
             MusicController.Instance.PlayTrack(endMusicLoop, endMusicIntro);
     }
 
-    // The spot the dwarf drops onto: a random point in the upper band of the screen, kept clear of pits /
-    // spikes / walls and well away from the player — so the boss always makes its entrance up top, never
-    // on top of the player, wherever it was placed or spawned. Falls back to its current spot if there's
-    // no camera to frame against.
+    // The spot the dwarf drops onto: a random point in the upper band of the screen (out of the bottom
+    // 40%), kept clear of pits / spikes / walls and away from the player — but it MAY land on other
+    // enemies, so the boss always makes its entrance up top, never on top of the player, wherever it was
+    // placed or spawned. Samples points and never returns one on a hazard: it prefers a clear spot far
+    // from the player, and if it can't get far it takes the clear point furthest from the player.
     Vector3 LandingSpot()
     {
         Vector3 fallback = _dwarf != null ? _dwarf.transform.position : transform.position;
@@ -201,27 +248,30 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
         Vector2 playerPos = player != null ? (Vector2)player.transform.position : (Vector2)fallback;
 
         float depth   = Mathf.Abs(cam.transform.position.z - fallback.z);
-        int   blocked = LayerMask.GetMask("Damage", "Pits", "Obstacle");
+        int   blocked = LayerMask.GetMask("Damage", "Pits", "Obstacle"); // NOT enemies — landing on them is fine
 
-        for (int i = 0; i < 24; i++)
+        Vector3 best = fallback;       // give up to the (spawner-cleared) spawn spot only if nothing samples clear
+        float   bestDist = -1f;
+
+        for (int i = 0; i < 40; i++)
         {
-            float vx = Random.Range(0.18f, 0.82f);
+            float vx = Random.Range(0.12f, 0.88f);
             float vy = Random.Range(landViewportY.x, landViewportY.y);
 
             Vector3 p = cam.ViewportToWorldPoint(new Vector3(vx, vy, depth));
             p.z = fallback.z;
 
-            if (Vector2.Distance(p, playerPos) < landMinPlayerDistance) continue;       // keep clear of the player
-            if (Physics2D.OverlapCircle(p, landClearRadius, blocked) != null) continue; // and off pits/spikes/walls
+            // Never land on a pit / spike / wall.
+            if (Physics2D.OverlapCircle(p, landClearRadius, blocked) != null) continue;
 
-            return p;
+            float d = Vector2.Distance(p, playerPos);
+            if (d >= landMinPlayerDistance) return p; // ideal: clear AND clear of the player
+
+            // Otherwise keep the clear point that's furthest from the player as a fallback.
+            if (d > bestDist) { bestDist = d; best = p; }
         }
 
-        // Nothing satisfied both — settle for the top of the screen, biased to the side away from the player.
-        float biasX = playerPos.x <= cam.transform.position.x ? 0.72f : 0.28f;
-        Vector3 c = cam.ViewportToWorldPoint(new Vector3(biasX, landViewportY.y, depth));
-        c.z = fallback.z;
-        return c;
+        return best;
     }
 
     // The point directly above the top edge of the screen from which the dwarf falls in. Lifts by the

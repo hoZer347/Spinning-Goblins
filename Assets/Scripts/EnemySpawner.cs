@@ -4,11 +4,11 @@ using UnityEngine;
 /// Periodically spawns enemies from a weighted set of prefabs, somewhere inside a box around this
 /// object — never on the Damage, Pits, or Obstacle layers.
 ///
-/// Each entry can carry a spawn cost (drawn from the spawner's running budget) and a time restriction
-/// (only spawnable after a number of seconds), so waves can ramp up: cheap enemies from the start,
-/// pricier ones unlocking later, until the budget runs dry. The first time an entry's time threshold
-/// is met it gets one GUARANTEED spawn (its "debut") even if the budget can't afford it — so a unit
-/// always shows up when it unlocks; budget rules apply to it only from its second spawn on.
+/// Each entry can carry a spawn cost and a time restriction (only spawnable after a number of seconds),
+/// so waves can ramp up: cheap enemies from the start, pricier ones unlocking later. The budget caps the
+/// total cost of enemies ALIVE AT ONCE — it's refunded as they die, so the arena keeps refilling rather
+/// than running dry. The first time an entry's time threshold is met it gets one GUARANTEED spawn (its
+/// "debut") even if it'd exceed the budget; budget rules apply to it from its second spawn on.
 /// </summary>
 public class EnemySpawner : MonoBehaviour
 {
@@ -17,7 +17,7 @@ public class EnemySpawner : MonoBehaviour
 	{
 		public GameObject prefab;
 		[Min(0f)] public float weight = 1f;
-		[Tooltip("Subtracted from the spawner's running budget each time this enemy spawns.")]
+		[Tooltip("This enemy's cost against the budget while it's alive (refunded when it dies).")]
 		[Min(0f)] public float cost = 0f;
 		[Tooltip("This enemy can only spawn once this many seconds have elapsed. 0 = available from the start.")]
 		[Min(0f)] public float availableAfter = 0f;
@@ -31,8 +31,9 @@ public class EnemySpawner : MonoBehaviour
 	[SerializeField] Entry[] enemies;
 
 	[Header("Budget")]
-	[Tooltip("Running total the spawner may spend. Each spawn subtracts its enemy's cost; once nothing " +
-		"affordable remains, spawning stops. 0 = unlimited (costs are ignored).")]
+	[Tooltip("Cap on the total cost of enemies ALIVE AT ONCE. Each living enemy holds its cost; the cost " +
+		"is refunded the instant it dies, so spawning resumes as the player clears the arena. " +
+		"0 = unlimited (costs ignored; only Max Alive caps the population).")]
 	[SerializeField] float budget = 0f;
 
 	[Header("Spawning")]
@@ -57,7 +58,6 @@ public class EnemySpawner : MonoBehaviour
 	int _blockedLayers;
 	float _timer;
 	float _elapsed;          // seconds this spawner has been active — the clock for per-entry availableAfter
-	float _remainingBudget;
 	Transform _player;
 
 	// Prefer the shared level clock (TimeUI) so per-entry availableAfter unlocks line up with the timer
@@ -68,7 +68,6 @@ public class EnemySpawner : MonoBehaviour
 	{
 		_blockedLayers = LayerMask.GetMask("Damage", "Pits", "Obstacle");
 		_timer = spawnOnStart ? spawnInterval : 0f;
-		_remainingBudget = budget;
 	}
 
 	private void Update()
@@ -93,8 +92,8 @@ public class EnemySpawner : MonoBehaviour
 		{
 			Instantiate(entry.prefab, pos, Quaternion.identity);
 			entry.hasDebuted = true;
-			// Spend the cost, clamped so a forced (over-budget) debut can't drive the budget negative.
-			if (budget > 0f) _remainingBudget = Mathf.Max(0f, _remainingBudget - entry.cost);
+			// No manual spend: the spawned enemy adds its spawnCost to EnemyController.AliveCost itself,
+			// and refunds it when it dies — so the budget tracks what's alive, not a one-way total.
 		}
 	}
 
@@ -169,8 +168,17 @@ public class EnemySpawner : MonoBehaviour
 
 	private bool Eligible(Entry e) =>
 		Valid(e)
-		&& ElapsedTime >= e.availableAfter              // time restriction: only after availableAfter
-		&& (budget <= 0f || e.cost <= _remainingBudget); // affordable (or budget disabled)
+		&& ElapsedTime >= e.availableAfter                                          // unlocked by its timer
+		&& (budget <= 0f || hoZer.EnemyController.AliveCost + CostOf(e) <= budget); // fits the live-cost cap
+
+	// The cost this entry adds to AliveCost when it spawns — read straight off the prefab's EnemyController
+	// so the eligibility check matches exactly what the spawned enemy contributes (falls back to Entry.cost
+	// for a prefab without an EnemyController).
+	private float CostOf(Entry e)
+	{
+		hoZer.EnemyController ec = e.prefab != null ? e.prefab.GetComponent<hoZer.EnemyController>() : null;
+		return ec != null ? ec.spawnCost : e.cost;
+	}
 
 	// Live enemy count from EnemyController's running tally: it bumps up on spawn and back down the
 	// instant an enemy dies (Death/Falling) — reliable where the old scene scan lagged a corpse's

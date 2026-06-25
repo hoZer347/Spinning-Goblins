@@ -529,11 +529,23 @@ public class GameManager : StateMachine<GameManager>
             return;
         }
 
-        if (fade) TransitionToPath(pick);
-        else      SceneManager.LoadScene(pick);
+        if (fade)
+        {
+            TransitionToPath(pick);
+            return;
+        }
+
+        // Direct load (death reset, no fade). If `pick` is the scene we already have sitting in memory as
+        // a held async preload, ACTIVATE that op instead of calling LoadScene — otherwise we load a second
+        // copy of the same scene alongside the stalled preload (which survives on the persistent
+        // GameManager), and end up with two copies loaded at once.
+        AsyncOperation preloaded = TakePreloadedOp(pick);
+        if (preloaded != null) preloaded.allowSceneActivation = true;
+        else                   SceneManager.LoadScene(pick);
     }
 
-    /// <summary>Reloads the active scene directly (no fade transition).</summary>
+    /// <summary>Reloads the active scene directly (no fade transition). Any held preload is for a DIFFERENT
+    /// (next) scene and stays harmlessly inactive in memory — reused by the next transition.</summary>
     public void ReloadActiveScene() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 
     // True when an active scene path is the scene a SceneReference points at (full path or name).

@@ -207,7 +207,8 @@ public class PlayerSpriteAnimator : MonoBehaviour
         if (state is St_Pl_Stopping)
             return LandingFrames != null && LandingFrames.Length > 0 ? LandingFrames : SpinFrames;
         if (IsSpinning(state))                                return SpinFrames;
-        if (state is St_Pl_Hitstun || state is St_Pl_IFrames) return HitstunFrames;
+        // Hitstun, the i-frame recovery, AND death all show the damaged goblin animation.
+        if (state is St_Pl_Hitstun || state is St_Pl_IFrames || state is St_Pl_OnDeath) return HitstunFrames;
         return IdleFrames;
     }
 

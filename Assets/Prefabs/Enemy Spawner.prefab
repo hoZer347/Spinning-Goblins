@@ -52,10 +52,10 @@ MonoBehaviour:
   - prefab: {fileID: 7417291820908702755, guid: b3e1f7a9c2d04e6b8a15c9d72f3e0a4c, type: 3}
     weight: 0.1
     cost: 1
-    availableAfter: 10
+    availableAfter: 30
   budget: 10
-  spawnInterval: 2
-  maxAlive: 10
+  spawnInterval: 2.5
+  maxAlive: 8
   spawnOnStart: 1
   spawnArea: {x: 21.1, y: 16.4}
   minPlayerDistance: 6
