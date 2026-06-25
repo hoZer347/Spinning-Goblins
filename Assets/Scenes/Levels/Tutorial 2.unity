@@ -704,7 +704,7 @@ MonoBehaviour:
   m_text: Watch out for harmful spikes!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: d7860397346f8204284c6e7fda1509be, type: 2}
-  m_sharedMaterial: {fileID: 726522470445135006, guid: d7860397346f8204284c6e7fda1509be, type: 2}
+  m_sharedMaterial: {fileID: 6419000439049505295, guid: d7860397346f8204284c6e7fda1509be, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

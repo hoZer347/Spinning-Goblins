@@ -21,9 +21,8 @@ public class St_Gm_Transitioning : State<GameManager>
 	private IEnumerator TransitionRoutine()
 	{
 
-		// Use the preloaded scene if it's already in memory, otherwise start a fresh async load.
-		AsyncOperation load = Focus.TakePreloadedOp(Focus.PendingScenePath)
-		                   ?? SceneManager.LoadSceneAsync(Focus.PendingScenePath);
+		// Load the next scene asynchronously in the background — it overlaps the exit animation below.
+		AsyncOperation load = SceneManager.LoadSceneAsync(Focus.PendingScenePath);
 		if (load == null)
 		{
 			Debug.LogWarning($"[GameManager] Scene not in build settings, skipping transition: {Focus.PendingScenePath}");
