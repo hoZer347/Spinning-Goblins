@@ -134,6 +134,13 @@ public class MusicController : MonoBehaviour
 
     private IEnumerator PlayRoutine()
     {
+        // Clean slate: silence BOTH sources before (re)starting. A bare Play() only stops coroutines, not
+        // audio, so without this a new track's intro would layer over an old loop still sounding — and on
+        // WebGL, Play() on an already-playing source stacks a SECOND node rather than restarting it. Either
+        // way you'd hear the track doubled. Stopping first makes overlap impossible.
+        _introSource.Stop();
+        _loopSource.Stop();
+
         // Decompress both clips before playing. They're DecompressOnLoad and, in a build, aren't
         // decompressed yet when Awake runs — playing immediately lets the decompress overrun the start
         // so the intro slips in late and doubles up with the loop. Wait for it, but cap the wait so a
@@ -165,6 +172,7 @@ public class MusicController : MonoBehaviour
 
         if (loop != null)
         {
+            _loopSource.Stop();   // never stack a second loop node on top of one already playing
             _loopSource.clip = loop;
             _loopSource.loop = true;
             _loopSource.Play();

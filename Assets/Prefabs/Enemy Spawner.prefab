@@ -50,7 +50,7 @@ MonoBehaviour:
     cost: 1
     availableAfter: 0
   - prefab: {fileID: 7417291820908702755, guid: b3e1f7a9c2d04e6b8a15c9d72f3e0a4c, type: 3}
-    weight: 0.1
+    weight: 0.3
     cost: 1
     availableAfter: 30
   - prefab: {fileID: 9211126048354776017, guid: f7ffb6791a42f474caad62c5ba7a11e3, type: 3}
