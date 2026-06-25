@@ -222,7 +222,9 @@ public class PlayerController : StateMachine<PlayerController>
 
 	protected override void OnUpdate()
 	{
-		if (!IsInvulnerable && IsCenterOverExit())
+		// Not while dragging: the body now travels to the pulled-back spot during a pull, so its
+		// centre can sweep over an exit tile mid-aim — don't let aiming load the next level.
+		if (!IsInvulnerable && !(Current is St_Pl_Dragging) && IsCenterOverExit())
 			GameManager.Instance?.LoadNextLevel();
 
 		// Clearing the arena no longer auto-advances the level here — an AllEnemyDeadSceneTrans

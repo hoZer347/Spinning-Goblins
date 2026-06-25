@@ -10,6 +10,12 @@ public class St_Pl_Dragging : St_Pl_Base
 {
     private const int MaxLineBounces = 1;
 
+    // The goblin must be pulled at least this far off its rest spot before enemies can hurt it during
+    // a drag. Below this the body is sitting on (or barely off) the origin — the first frames of a
+    // pull, or a pull a wall won't let happen — and an enemy touching it there would score a hit "at
+    // the origin". Past it the body is genuinely pulled back and the enemy must reach wherever it sits.
+    private const float DragHurtMinPull = 0.5f;
+
     private Vector2 _origin;
     private Vector2 _virtualScreen; // unclamped virtual cursor; the screen edge can't cap the pull
     Duration _wooshSFXDelay;
@@ -104,19 +110,24 @@ public class St_Pl_Dragging : St_Pl_Base
         targetPos.x = Mathf.Clamp(targetPos.x, sMin.x + extents.x, sMax.x - extents.x);
         targetPos.y = Mathf.Clamp(targetPos.y, sMin.y + extents.y, sMax.y - extents.y);
 
-        // Move ONLY the Sprite child to the stretched position — never the root. The root carries the
-        // Rigidbody, and a hand-moved Kinematic body is snapped straight back to the drag origin by the
-        // physics writeback every step, dragging the collider (and the transform.position enemies read)
-        // to the origin with it — that's the whole "hit/target the origin" bug. The Sprite has no
-        // physics, so it holds the stretched spot cleanly. Enemies and the hurt check read the sprite
-        // via PlayerController.Position, so they track the goblin where it's drawn, not the origin.
-        if (Focus.Sprite != null)
-            Focus.Sprite.transform.position =
-                new Vector3(targetPos.x, targetPos.y, Focus.Sprite.transform.position.z);
+        // Move the WHOLE body to the pulled-back spot — root, Rigidbody, collider and all. The earlier
+        // approach moved only the Sprite child and parked the Rigidbody/collider at the drag origin,
+        // which is exactly why enemies could only connect at the origin and why the body kept snapping
+        // back there. A hand-moved Kinematic body DOES snap back if you set only transform.position: the
+        // physics writeback overwrites it from Rigidbody.position every step. Setting Rigidbody.position
+        // TOO pins the body at the pulled-back spot, so the collider, the sprite (riding the root at
+        // local 0), enemy targeting (PlayerController.Position) and the hurt check are all there — and
+        // there is no origin-parked body left to jump back to. Detection is Discrete during the drag, so
+        // moving the body each frame never sweeps a hit along the path from the origin.
+        Focus.transform.position = new Vector3(targetPos.x, targetPos.y, Focus.transform.position.z);
+        Focus.Rigidbody.position = targetPos;
 
-        // Hurt is evaluated by an explicit overlap at the goblin's drawn position (the sprite), not via
-        // the physics collider — which is back on the stationary root and would never line up here.
-        if (CheckDragHurt(targetPos))
+        // Hurt is evaluated by an explicit overlap at the goblin's body, every frame — more reliable
+        // than waiting on a physics contact event while the body is Kinematic. Only once the body has
+        // actually been pulled clear of the rest spot, though: while it's still sitting on the origin
+        // (drag just started, or a wall is blocking the pull) an enemy reaching it must NOT score the
+        // hit "at the origin" — the goblin only looks pulled back there because the sprite elongates.
+        if ((targetPos - _origin).sqrMagnitude > DragHurtMinPull * DragHurtMinPull && CheckDragHurt(targetPos))
             return;
 
         // Line from the pulled-back body (the sprite, now the stretched position), through origin,
@@ -142,10 +153,10 @@ public class St_Pl_Dragging : St_Pl_Base
             SetState<St_Pl_Flying>();
     }
 
-    // Hurts the player if a live enemy overlaps the goblin where it's actually drawn (a circle the
-    // size of the player's own collider, centred on the stretched body). Evaluated from the live
-    // position each frame so it can't lag at the drag origin the way the physics collider does.
-    // Returns true once a hit is taken (the state has already changed — the caller must stop).
+    // Hurts the player when a live enemy's body overlaps the goblin's at the pulled-back spot. The
+    // whole body (collider included) is moved there during the drag, so a plain collider overlap
+    // means the enemy has genuinely reached the goblin — no origin/sprite split to correct for, and
+    // so no extra distance gate. Returns true once a hit is taken (the state has already changed).
     private bool CheckDragHurt(Vector2 bodyCenter)
     {
         float radius = Focus.Collider != null ? Focus.Collider.bounds.extents.x : 0.5f;
@@ -161,6 +172,12 @@ public class St_Pl_Dragging : St_Pl_Base
                 || enemy.Current is St_En1_Falling;
             if (harmless) continue;
 
+            // [HURT DEBUG] temporary — where is the goblin body, the enemy, and the rest spot at the
+            // instant damage lands? bodyToOrigin says whether we were actually pulled back or not.
+            Debug.Log($"[HURT] goblinBody={bodyCenter} enemy={(Vector2)enemy.transform.position} "
+                + $"restOrigin={_origin} bodyToOrigin={Vector2.Distance(bodyCenter, _origin):0.00} "
+                + $"enemyToBody={Vector2.Distance((Vector2)enemy.transform.position, bodyCenter):0.00} "
+                + $"enemyToOrigin={Vector2.Distance((Vector2)enemy.transform.position, _origin):0.00}");
             HurtFromEnemy(enemy);
             return true;
         }
@@ -175,12 +192,35 @@ public class St_Pl_Dragging : St_Pl_Base
             return offset;
 
         float radius = Focus.Collider.bounds.extents.x;
-        RaycastHit2D hit = Physics2D.CircleCast(
+
+        // Enemies sit on the Obstacle layer too (so the flying goblin bounces off them), but an enemy
+        // is NOT a wall — clamping the pull-back against one lets an approaching enemy shove the aim
+        // (and the body) back toward the origin, then snap it home when the enemy reaches the rest spot.
+        // Cast for ALL obstacle hits and take the nearest that ISN'T an enemy, so only real walls clamp.
+        RaycastHit2D[] hits = Physics2D.CircleCastAll(
             origin, radius, offset.normalized, offset.magnitude, Focus.ObstacleLayer);
 
-        return hit.collider != null
-            ? offset.normalized * hit.distance
-            : offset;
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider == null) continue;
+            if (hit.collider.GetComponentInParent<EnemyController>() != null) continue; // enemies aren't walls
+            return offset.normalized * hit.distance; // nearest real wall (CircleCastAll is distance-sorted)
+        }
+
+        return offset; // nothing but enemies (or empty) in the way — full stretch
+    }
+
+    // Suppress physics-based enemy contacts while the root collider sits at the drag origin.
+    // The only enemy damage path during a drag is CheckDragHurt — an explicit per-frame circle
+    // at the sprite's drawn position. This ensures enemies must reach the pulled-back sprite,
+    // not just touch the stationary root, to deal damage.
+    public override void OnContact(Collider2D other)
+    {
+        EnemyController enemy = other.GetComponent<EnemyController>()
+            ?? other.GetComponentInParent<EnemyController>();
+        if (enemy != null) return;
+
+        base.OnContact(other);
     }
 
     public override void OnExit(State nextState)
@@ -200,6 +240,18 @@ public class St_Pl_Dragging : St_Pl_Base
             Focus.transform.position = new Vector3(launchPos.x, launchPos.y, Focus.transform.position.z);
             Focus.Rigidbody.position = launchPos;
             Focus.Sprite.transform.localPosition = Vector3.zero;
+
+            // Root is now at the sprite position — collider offset back to zero so it stays centred.
+            if (Focus.Collider != null)
+                Focus.Collider.offset = Vector2.zero;
+
+            // The root's Kinematic Rigidbody sits at the drag origin the whole pull. Without a
+            // forced sync here, the Kinematic writeback in the next FixedUpdate would read the
+            // physics body's OLD simulated position (the drag origin) and overwrite transform.position
+            // back to (0,0) before the Dynamic transition takes effect — causing a one-frame snap.
+            // SyncTransforms pushes the new transform position into the physics simulation NOW so
+            // the writeback reads launchPos instead.
+            Physics2D.SyncTransforms();
         }
 
         // Launch from where the body actually is (the stretched position) instead of snapping

@@ -96,6 +96,7 @@ MonoBehaviour:
   hurtFlashTime: 0.1
   hitStunTime: 1
   SpikeBounceSpeed: 2
+  EnemyHitBounceReduction: 0.25
   UseHealthBar: 0
   HealthBarHeight: 0.7
   audioSource: {fileID: 3037478790147917427}
@@ -673,7 +674,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -5920194612128632720, guid: 696fb7bb856b2ed4a8f39318723efbaa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
