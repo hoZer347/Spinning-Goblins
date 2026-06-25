@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using hoZer;
 using hoZer.Dialogue;
 using UnityEngine;
@@ -87,12 +88,18 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
     // The id of the cutscene currently/last running, so RescueIfInterrupted can roll back the right flag.
     static string _activeId;
 
+    // Cutscene ids that have already played THIS session. Held in memory only (a static) — never saved —
+    // so it fires once per run but is forgotten when the app/page restarts, so leaving and coming back
+    // replays it. Mirrors the old per-id flag, just without the PlayerPrefs persistence.
+    static readonly HashSet<string> _ranThisSession = new HashSet<string>();
+
     // Clear the statics at each play-session start, even with editor Domain Reload off.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics()
     {
         _cutsceneDwarf = null;
         _activeId      = null;
+        _ranThisSession.Clear();
     }
 
     /// <summary>
@@ -107,20 +114,20 @@ public class FirstTimeCutsceneTrigger : MonoBehaviour
         if (string.IsNullOrEmpty(_activeId)) return;
         if (PersistentDialogue.Instance == null || !PersistentDialogue.Instance.IsShowing) return;
 
-        FirstTimeMemory.Reset(_activeId);
+        _ranThisSession.Remove(_activeId);
     }
 
     void Start()
     {
-        if (FirstTimeMemory.HasRun(id))
+        if (_ranThisSession.Contains(id))
         {
-            // Seen before — the cutscene has already happened: remove only this behaviour and DON'T block
-            // spawning (the dwarf is just a normal enemy now). Leaves the GameObject and its components.
+            // Already played this session — remove only this behaviour and DON'T block spawning (the dwarf
+            // is just a normal enemy now). Leaves the GameObject and its components.
             Destroy(this);
             return;
         }
 
-        FirstTimeMemory.MarkRun(id);
+        _ranThisSession.Add(id);
         _activeId = id; // remember which flag to roll back if the player dies mid-cutscene
         _dwarf = GetComponent<EnemyController>();
 

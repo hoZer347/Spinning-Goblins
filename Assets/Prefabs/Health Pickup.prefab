@@ -50,6 +50,8 @@ MonoBehaviour:
   bounceDuration: 0.45
   floatHeight: 0.15
   floatSpeed: 1.5
+  pickupSound: {fileID: 8300000, guid: cc84e7c685a18d2469e76f3d3418f7fb, type: 3}
+  pickupVolume: 1
 --- !u!212 &8000661117146939104
 SpriteRenderer:
   serializedVersion: 2

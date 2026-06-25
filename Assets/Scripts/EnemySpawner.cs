@@ -36,6 +36,12 @@ public class EnemySpawner : MonoBehaviour
 		"0 = unlimited (costs ignored; only Max Alive caps the population).")]
 	[SerializeField] float budget = 0f;
 
+	[Header("Health Pickups")]
+	[Tooltip("Hard cap on how many health pickups can be alive at once — counted separately from the " +
+		"enemy budget / alive-cap. 0 = unlimited. A pickup entry is any prefab in the list with a " +
+		"HealthPickup component.")]
+	[SerializeField] int maxHealthPickupsAlive = 2;
+
 	[Header("Spawning")]
 	[Tooltip("Seconds between spawns.")]
 	[SerializeField] float spawnInterval = 2f;
@@ -59,6 +65,7 @@ public class EnemySpawner : MonoBehaviour
 	float _timer;
 	float _elapsed;          // seconds this spawner has been active — the clock for per-entry availableAfter
 	Transform _player;
+	int _livePickups;        // pickups actually alive, recounted each spawn tick so the cap can't drift
 
 	// Prefer the shared level clock (TimeUI) so per-entry availableAfter unlocks line up with the timer
 	// the player sees; fall back to our own accumulator in scenes without a TimeUI.
@@ -81,10 +88,17 @@ public class EnemySpawner : MonoBehaviour
 		// A first-time cutscene dwarf is a boss moment: nothing else spawns while it's alive.
 		if (FirstTimeCutsceneTrigger.SpawningBlocked) return;
 
-		if (maxAlive > 0 && AliveCount() >= maxAlive) return;
+		// Count the health pickups that are ACTUALLY alive right now (cheap — once per spawn tick), so the
+		// cap always reflects reality. A hand-kept +/- tally drifts: a missed decrement (a destroy that
+		// skipped OnDestroy, a scene change) leaves it stuck at the cap and pickups never return.
+		_livePickups = maxHealthPickupsAlive > 0
+			? FindObjectsByType<HealthPickup>(FindObjectsSortMode.None).Length
+			: 0;
 
-		// A newly unlocked unit gets a guaranteed first spawn (its debut) even if the budget can't afford
-		// it; otherwise fall back to the normal weighted, budget-gated pick.
+		// A newly unlocked unit gets a GUARANTEED first spawn (its debut) regardless of the budget AND the
+		// enemy alive-cap — so the Beeg Dwarf's cutscene entrance can't be suppressed by a full arena. The
+		// normal weighted pick applies the per-kind caps itself in Eligible (enemies: budget + alive-cap;
+		// health pickups: their own separate count cap).
 		Entry entry = PickDebut() ?? PickEligible();
 		if (entry == null) return;
 
@@ -157,7 +171,7 @@ public class EnemySpawner : MonoBehaviour
 		if (enemies == null) return null;
 
 		foreach (Entry e in enemies)
-			if (e != null && e.prefab != null && ElapsedTime >= e.availableAfter && !e.hasDebuted)
+			if (e != null && e.prefab != null && ElapsedTime >= e.availableAfter && !e.hasDebuted && !PickupAtCap(e))
 				return e;
 
 		return null;
@@ -166,10 +180,26 @@ public class EnemySpawner : MonoBehaviour
 	// A usable entry: a real prefab with a positive weight.
 	private bool Valid(Entry e) => e != null && e.prefab != null && Mathf.Max(0f, e.weight) > 0f;
 
-	private bool Eligible(Entry e) =>
-		Valid(e)
-		&& ElapsedTime >= e.availableAfter                                          // unlocked by its timer
-		&& (budget <= 0f || hoZer.EnemyController.AliveCost + CostOf(e) <= budget); // fits the live-cost cap
+	private bool Eligible(Entry e)
+	{
+		if (!Valid(e) || ElapsedTime < e.availableAfter) return false; // unlocked by its timer
+
+		// Health pickups answer ONLY to their own separate count cap — never the enemy budget or alive-cap.
+		if (IsPickup(e))
+			return !PickupAtCap(e);
+
+		// Enemies: capped by the live population and the live-cost budget.
+		return (maxAlive <= 0 || AliveCount() < maxAlive)
+			&& (budget <= 0f || hoZer.EnemyController.AliveCost + CostOf(e) <= budget);
+	}
+
+	// A prefab carrying a HealthPickup is a "pickup" entry, capped separately from enemies.
+	private static bool IsPickup(Entry e) => e.prefab != null && e.prefab.GetComponent<HealthPickup>() != null;
+
+	// True when this entry is a health pickup and its separate cap is already full (using the live count
+	// recounted at the top of this tick).
+	private bool PickupAtCap(Entry e) =>
+		maxHealthPickupsAlive > 0 && IsPickup(e) && _livePickups >= maxHealthPickupsAlive;
 
 	// The cost this entry adds to AliveCost when it spawns — read straight off the prefab's EnemyController
 	// so the eligibility check matches exactly what the spawned enemy contributes (falls back to Entry.cost

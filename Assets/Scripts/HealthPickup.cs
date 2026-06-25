@@ -12,6 +12,10 @@ public class HealthPickup : MonoBehaviour
     [SerializeField] float floatHeight = 0.15f;
     [SerializeField] float floatSpeed = 1.5f;
 
+    [Tooltip("Played when the player picks this up. Leave empty for no sound.")]
+    [SerializeField] AudioClip pickupSound;
+    [Range(0f, 1f)] [SerializeField] float pickupVolume = 1f;
+
     Vector3 _restPos;
     bool _floating;
 
@@ -31,6 +35,10 @@ public class HealthPickup : MonoBehaviour
         PlayerController player = other.GetComponent<PlayerController>()
             ?? other.GetComponentInParent<PlayerController>();
         if (player == null) return;
+
+        // Persistent manager, so the sound still plays after we destroy ourselves. No-ops on a null
+        // clip, so it stays silent until a clip is assigned.
+        SfxManager.Play(pickupSound, pickupVolume);
 
         player.RestoreHealth();
         Destroy(gameObject);

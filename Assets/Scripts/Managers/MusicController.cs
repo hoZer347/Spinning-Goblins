@@ -10,8 +10,9 @@ using UnityEngine;
 /// on through every later scene.
 ///
 /// It creates its OWN dedicated AudioSources at runtime and never touches any other audio source.
-/// The intro→loop hand-off is scheduled on the DSP clock (PlayScheduled), so it's sample-accurate
-/// with no gap or click between the intro and the loop.
+/// The main track repeats using the AudioSource's own loop flag (a core feature that works on every
+/// platform, including WebGL / itch.io); the optional intro plays once first and only hands off to the
+/// loop after it has fully finished, so the two can never overlap.
 /// </summary>
 public class MusicController : MonoBehaviour
 {
@@ -48,13 +49,12 @@ public class MusicController : MonoBehaviour
     private AudioSource _loopSource;
     private AudioLowPassFilter _lowPass;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-    // True once the loop has been started and should stay playing. WebGL doesn't reliably honour
-    // AudioSource.loop, so Update() watches this and re-triggers the loop source if it ever stops, to
-    // keep the track repeating. Cleared by StopMusic so an intentional stop isn't fought. (WebGL-only —
-    // desktop loops natively via PlayScheduled, so the flag would just be an unused field there.)
-    private bool _wantLoop;
-#endif
+    // The intro→loop play sequence and any active fade run as SEPARATE coroutines, tracked here. A fade
+    // (slow-down / speed-up) must NOT abort the intro→loop hand-off — doing so via StopAllCoroutines was
+    // the bug where a fade firing mid-intro (e.g. a death right after a new track's intro began) left the
+    // loop never starting. Each is now stopped only by something that genuinely supersedes it.
+    private Coroutine _sequenceRoutine;
+    private Coroutine _fadeRoutine;
 
     // Multiplies the live volume during a slow-down / speed-up fade (1 = no fade). Lets those routines
     // ease the volume even though Update() re-asserts the Inspector volume every frame.
@@ -103,33 +103,24 @@ public class MusicController : MonoBehaviour
         float v = volume * _fxVolumeScale;
         if (_introSource != null) _introSource.volume = v;
         if (_loopSource  != null) _loopSource.volume  = v;
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-        // WebGL doesn't reliably honour AudioSource.loop, so the loop track plays once and stops. Re-
-        // trigger it whenever it falls silent while we still want it looping. (A normal slow-down keeps
-        // isPlaying true, and an intentional stop clears _wantLoop, so neither is fought.)
-        if (_wantLoop && _loopSource != null && _loopSource.clip != null && !_loopSource.isPlaying)
-            _loopSource.Play();
-#endif
     }
 
-    /// <summary>Starts the intro→loop sequence, scheduling the loop to begin exactly as the intro ends.</summary>
+    /// <summary>Plays the intro once (if any), then starts the main track looping.</summary>
     public void Play()
     {
-        StopAllCoroutines();
+        // A brand-new track supersedes both the old sequence and any in-progress fade.
+        if (_fadeRoutine     != null) { StopCoroutine(_fadeRoutine);     _fadeRoutine     = null; }
+        if (_sequenceRoutine != null) { StopCoroutine(_sequenceRoutine); _sequenceRoutine = null; }
         ResetAudioFx();   // clear any lingering slow-down (pitch / muffle) so the new track plays clean
-        StartCoroutine(PlayRoutine());
+        _sequenceRoutine = StartCoroutine(PlayRoutine());
     }
 
     private IEnumerator PlayRoutine()
     {
-        // Make both clips fully RESIDENT before scheduling. They're DecompressOnLoad and, in a build,
-        // aren't decompressed yet when Awake runs — so scheduling immediately lets the decompress
-        // overrun the start, the intro slips in late, and it plays on top of the loop (the song
-        // doubles). LoadAudioData is asynchronous, so we must WAIT for it to finish, not just kick it
-        // off. (In the editor the clips are already in memory, which is why it only shows in a build.)
-        // Cap the wait, though: WebGL reports load state oddly, and we must never hang here and leave
-        // the track silent.
+        // Decompress both clips before playing. They're DecompressOnLoad and, in a build, aren't
+        // decompressed yet when Awake runs — playing immediately lets the decompress overrun the start
+        // so the intro slips in late and doubles up with the loop. Wait for it, but cap the wait so a
+        // platform that reports load state oddly (WebGL) can never hang here and leave the track silent.
         if (intro != null) intro.LoadAudioData();
         if (loop  != null) loop.LoadAudioData();
         float waited = 0f;
@@ -139,58 +130,28 @@ public class MusicController : MonoBehaviour
             yield return null;
         }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-        // WebGL's audio backend doesn't reliably honour PlayScheduled / DSP-clock scheduling, so a track
-        // (re)started after a scene load — e.g. the battle music brought up as the tutorial ends — can
-        // silently never start. Play it the plain way instead. Wait for the intro to ACTUALLY finish
-        // (isPlaying), not a computed length — samples/frequency are unreliable on WebGL and a wrong
-        // value would either overlap the loop or leave it never starting. The 60s cap is only a safety
-        // against isPlaying getting stuck; a real intro ends long before it.
+        // Intro once, then the main track on loop. Looping is the AudioSource's own `loop` flag — a core
+        // feature that works on every platform (editor, standalone, WebGL / itch.io). The intro and loop
+        // play strictly one-after-the-other: we wait for the intro to finish and stop it before starting
+        // the loop, so they can never overlap (the old "double music" bug).
         if (intro != null)
         {
             _introSource.clip = intro;
+            _introSource.loop = false;
             _introSource.Play();
-            yield return null; // let isPlaying latch this frame
-            float t = 0f;
-            while (_introSource.isPlaying && t < 60f) { t += Time.unscaledDeltaTime; yield return null; }
+
+            // Wait the intro's known length, then hand off. Don't poll isPlaying — WebGL can leave it
+            // stuck true after a non-looping clip ends, which would stall the loop from ever starting.
+            yield return new WaitForSecondsRealtime(intro.length);
+            _introSource.Stop(); // make sure it's done before the loop starts, so they never overlap
         }
+
         if (loop != null)
         {
             _loopSource.clip = loop;
             _loopSource.loop = true;
             _loopSource.Play();
-            // Arm the keep-alive only once the loop is confirmed playing, so Update() doesn't mistake the
-            // WebGL start-up latch for a finished loop and restart it over and over.
-            float lt = 0f;
-            while (!_loopSource.isPlaying && lt < 2f) { lt += Time.unscaledDeltaTime; yield return null; }
-            _wantLoop = true; // Update() re-triggers it if WebGL drops the loop, so the track repeats
         }
-#else
-        // Lead-in so both scheduled starts are armed before the DSP clock reaches them.
-        double startTime = AudioSettings.dspTime + 0.2;
-
-        if (intro != null)
-        {
-            double loopStart = startTime + (double)intro.samples / intro.frequency;
-
-            _introSource.clip = intro;
-            _introSource.PlayScheduled(startTime);
-            // Hard-cap the intro's end exactly at the loop's start, so even if it ever begins late it
-            // can never bleed past the hand-off and double up with the loop.
-            _introSource.SetScheduledEndTime(loopStart);
-
-            if (loop != null)
-            {
-                _loopSource.clip = loop;
-                _loopSource.PlayScheduled(loopStart);
-            }
-        }
-        else if (loop != null)
-        {
-            _loopSource.clip = loop;
-            _loopSource.PlayScheduled(startTime);
-        }
-#endif
     }
 
     private static bool Loading(AudioClip clip) =>
@@ -199,9 +160,8 @@ public class MusicController : MonoBehaviour
     /// <summary>Stops both tracks — e.g. call from an outro/credits scene.</summary>
     public void StopMusic()
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        _wantLoop = false; // stop the WebGL loop keep-alive from fighting this
-#endif
+        // Cancel a pending intro→loop hand-off too, so a stop is final and the loop can't start afterwards.
+        if (_sequenceRoutine != null) { StopCoroutine(_sequenceRoutine); _sequenceRoutine = null; }
         if (_introSource != null) _introSource.Stop();
         if (_loopSource  != null) _loopSource.Stop();
     }
@@ -217,8 +177,9 @@ public class MusicController : MonoBehaviour
     /// </summary>
     public void SlowToStop(float duration = 1.5f, bool stopWhenDone = true)
     {
-        StopAllCoroutines();
-        StartCoroutine(SlowToStopRoutine(Mathf.Max(0.01f, duration), stopWhenDone));
+        // Replace only a previous fade — the intro→loop sequence keeps running so the loop still arrives.
+        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
+        _fadeRoutine = StartCoroutine(SlowToStopRoutine(Mathf.Max(0.01f, duration), stopWhenDone));
     }
 
     private IEnumerator SlowToStopRoutine(float duration, bool stopWhenDone)
@@ -260,8 +221,8 @@ public class MusicController : MonoBehaviour
     /// </summary>
     public void SpeedUp(float duration = 1.5f)
     {
-        StopAllCoroutines();
-        StartCoroutine(SpeedUpRoutine(Mathf.Max(0.01f, duration)));
+        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
+        _fadeRoutine = StartCoroutine(SpeedUpRoutine(Mathf.Max(0.01f, duration)));
     }
 
     private IEnumerator SpeedUpRoutine(float duration)
