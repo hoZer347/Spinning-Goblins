@@ -108,7 +108,7 @@ MonoBehaviour:
   spinWindup: 1
   spinAttackTime: 2.5
   spinAttackDistance: 8
-  spinCooldown: 1.5
+  spinCooldown: 4.5
   spinSquash: 0.3
   spinWobbleCycles: 4
   spinDirection: {x: 0, y: 0}

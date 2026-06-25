@@ -8,8 +8,9 @@ namespace hoZer
     /// machine (so the gameplay pump goes idle) except the ones passed in; <see cref="ThawAll"/> re-enables
     /// exactly the ones it froze, restoring each to the state it was mid-running. It also disables any
     /// <see cref="EnemySpawner"/> (a plain MonoBehaviour the pump-freeze wouldn't otherwise stop) so no
-    /// new enemies arrive mid-cutscene, and re-enables them on thaw. One cutscene at a time — the frozen
-    /// set is static, and FreezeAll clears any prior freeze first so they can't stack.
+    /// new enemies arrive mid-cutscene, and pauses the <see cref="TimeUI"/> level timer — all re-enabled
+    /// on thaw. One cutscene at a time — the frozen set is static, and FreezeAll clears any prior freeze
+    /// first so they can't stack.
     /// </summary>
     public static class CutsceneFreeze
     {
@@ -38,6 +39,14 @@ namespace hoZer
 
                 s.enabled = false;
                 _disabled.Add(s);
+            }
+
+            // Pause the level timer too (it counts in its own Update) so frozen time isn't charged to the
+            // player. ThawAll re-enables it; the death-restart re-enables it earlier, on the first input.
+            if (TimeUI.Instance != null && TimeUI.Instance.enabled)
+            {
+                TimeUI.Instance.enabled = false;
+                _disabled.Add(TimeUI.Instance);
             }
         }
 
