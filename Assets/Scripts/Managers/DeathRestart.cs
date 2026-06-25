@@ -57,10 +57,11 @@ public class DeathRestart : MonoBehaviour
         {
             State s = player.Current;
 
-            // Wind the music back up the moment they start a fresh pull.
+            // Wind the music back up — and resume the level timer — the moment they start a fresh pull.
             if (!spedUp && s is St_Pl_Dragging)
             {
                 MusicController.Instance?.SpeedUp();
+                if (TimeUI.Instance != null) TimeUI.Instance.enabled = true;
                 spedUp = true;
             }
 

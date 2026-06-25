@@ -58,7 +58,7 @@ MonoBehaviour:
     cost: 1
     availableAfter: 30
   budget: 10
-  spawnInterval: 2.5
+  spawnInterval: 2.2
   maxAlive: 8
   spawnOnStart: 1
   spawnArea: {x: 21.1, y: 16.4}

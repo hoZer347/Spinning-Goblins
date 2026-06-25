@@ -48,6 +48,24 @@ public class MusicController : MonoBehaviour
     private AudioSource _loopSource;
     private AudioLowPassFilter _lowPass;
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // True once the loop has been started and should stay playing. WebGL doesn't reliably honour
+    // AudioSource.loop, so Update() watches this and re-triggers the loop source if it ever stops, to
+    // keep the track repeating. Cleared by StopMusic so an intentional stop isn't fought. (WebGL-only —
+    // desktop loops natively via PlayScheduled, so the flag would just be an unused field there.)
+    private bool _wantLoop;
+#endif
+
+    // Multiplies the live volume during a slow-down / speed-up fade (1 = no fade). Lets those routines
+    // ease the volume even though Update() re-asserts the Inspector volume every frame.
+    private float _fxVolumeScale = 1f;
+
+    // Cap the per-frame step of the slow-down / speed-up ramps. A scene load (death reload, battle entry)
+    // blocks the main thread, so the next Time.unscaledDeltaTime is huge — without this cap the pitch
+    // would lurch in one big step (the "choppy" jump). Capped, the ramp just continues smoothly after,
+    // and because the MusicController persists across the load it never has to restart.
+    private const float MaxFxStep = 1f / 30f;
+
     private void Awake()
     {
         // Singleton: the first instance wins and persists; any later scene copy destroys itself so
@@ -81,9 +99,18 @@ public class MusicController : MonoBehaviour
 
     private void Update()
     {
-        // Keep both sources tracking the Inspector volume so it can be tuned live.
-        if (_introSource != null) _introSource.volume = volume;
-        if (_loopSource  != null) _loopSource.volume  = volume;
+        // Track the Inspector volume (tunable live), scaled by any active slow-down / speed-up fade.
+        float v = volume * _fxVolumeScale;
+        if (_introSource != null) _introSource.volume = v;
+        if (_loopSource  != null) _loopSource.volume  = v;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // WebGL doesn't reliably honour AudioSource.loop, so the loop track plays once and stops. Re-
+        // trigger it whenever it falls silent while we still want it looping. (A normal slow-down keeps
+        // isPlaying true, and an intentional stop clears _wantLoop, so neither is fought.)
+        if (_wantLoop && _loopSource != null && _loopSource.clip != null && !_loopSource.isPlaying)
+            _loopSource.Play();
+#endif
     }
 
     /// <summary>Starts the intro→loop sequence, scheduling the loop to begin exactly as the intro ends.</summary>
@@ -101,10 +128,44 @@ public class MusicController : MonoBehaviour
         // overrun the start, the intro slips in late, and it plays on top of the loop (the song
         // doubles). LoadAudioData is asynchronous, so we must WAIT for it to finish, not just kick it
         // off. (In the editor the clips are already in memory, which is why it only shows in a build.)
+        // Cap the wait, though: WebGL reports load state oddly, and we must never hang here and leave
+        // the track silent.
         if (intro != null) intro.LoadAudioData();
         if (loop  != null) loop.LoadAudioData();
-        while (Loading(intro) || Loading(loop)) yield return null;
+        float waited = 0f;
+        while ((Loading(intro) || Loading(loop)) && waited < 3f)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // WebGL's audio backend doesn't reliably honour PlayScheduled / DSP-clock scheduling, so a track
+        // (re)started after a scene load — e.g. the battle music brought up as the tutorial ends — can
+        // silently never start. Play it the plain way instead. Wait for the intro to ACTUALLY finish
+        // (isPlaying), not a computed length — samples/frequency are unreliable on WebGL and a wrong
+        // value would either overlap the loop or leave it never starting. The 60s cap is only a safety
+        // against isPlaying getting stuck; a real intro ends long before it.
+        if (intro != null)
+        {
+            _introSource.clip = intro;
+            _introSource.Play();
+            yield return null; // let isPlaying latch this frame
+            float t = 0f;
+            while (_introSource.isPlaying && t < 60f) { t += Time.unscaledDeltaTime; yield return null; }
+        }
+        if (loop != null)
+        {
+            _loopSource.clip = loop;
+            _loopSource.loop = true;
+            _loopSource.Play();
+            // Arm the keep-alive only once the loop is confirmed playing, so Update() doesn't mistake the
+            // WebGL start-up latch for a finished loop and restart it over and over.
+            float lt = 0f;
+            while (!_loopSource.isPlaying && lt < 2f) { lt += Time.unscaledDeltaTime; yield return null; }
+            _wantLoop = true; // Update() re-triggers it if WebGL drops the loop, so the track repeats
+        }
+#else
         // Lead-in so both scheduled starts are armed before the DSP clock reaches them.
         double startTime = AudioSettings.dspTime + 0.2;
 
@@ -129,6 +190,7 @@ public class MusicController : MonoBehaviour
             _loopSource.clip = loop;
             _loopSource.PlayScheduled(startTime);
         }
+#endif
     }
 
     private static bool Loading(AudioClip clip) =>
@@ -137,6 +199,9 @@ public class MusicController : MonoBehaviour
     /// <summary>Stops both tracks — e.g. call from an outro/credits scene.</summary>
     public void StopMusic()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        _wantLoop = false; // stop the WebGL loop keep-alive from fighting this
+#endif
         if (_introSource != null) _introSource.Stop();
         if (_loopSource  != null) _loopSource.Stop();
     }
@@ -163,17 +228,22 @@ public class MusicController : MonoBehaviour
         float t = 0f;
         while (t < duration)
         {
-            t += Time.unscaledDeltaTime; // wind down even if the scene is paused / time-scaled
-            float k = Mathf.Clamp01(t / duration);
+            // Capped step (see MaxFxStep) so a scene-load frame spike can't lurch the ramp; unscaled so it
+            // winds down even while paused / time-scaled.
+            t += Mathf.Min(Time.unscaledDeltaTime, MaxFxStep);
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / duration)); // ease the ends for a softer wind-down
 
             float pitch = Mathf.Lerp(1f, 0.01f, k);            // slow the playback toward a halt
             if (_introSource != null) _introSource.pitch = pitch;
             if (_loopSource  != null) _loopSource.pitch  = pitch;
 
+            _fxVolumeScale     = 1f - k;                       // ...and fade out, so the grindy low-pitch tail is silent
             lp.cutoffFrequency = Mathf.Lerp(22000f, 300f, k);  // muffle it as it winds down
 
             yield return null;
         }
+
+        _fxVolumeScale = 0f;
 
         // Stop dead and clear the effect — unless we're meant to stay quietly playing at the slowed pitch
         // so a later SpeedUp can wind us straight back up.
@@ -199,18 +269,20 @@ public class MusicController : MonoBehaviour
         AudioLowPassFilter lp = LowPass();
 
         float startPitch  = _loopSource != null ? _loopSource.pitch : 0.01f;
+        float startVol    = _fxVolumeScale;
         float startCutoff = lp.cutoffFrequency;
 
         float t = 0f;
         while (t < duration)
         {
-            t += Time.unscaledDeltaTime;
-            float k = Mathf.Clamp01(t / duration);
+            t += Mathf.Min(Time.unscaledDeltaTime, MaxFxStep); // capped step — smooth across a scene-load spike
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / duration));
 
             float pitch = Mathf.Lerp(startPitch, 1f, k);
             if (_introSource != null) _introSource.pitch = pitch;
             if (_loopSource  != null) _loopSource.pitch  = pitch;
 
+            _fxVolumeScale     = Mathf.Lerp(startVol, 1f, k);   // fade back in as it spins up
             lp.cutoffFrequency = Mathf.Lerp(startCutoff, 22000f, k);
 
             yield return null;
@@ -232,12 +304,13 @@ public class MusicController : MonoBehaviour
         return _lowPass;
     }
 
-    // Clears any lingering slow-down: pitch back to normal and the lowpass fully open.
+    // Clears any lingering slow-down: pitch back to normal, volume fade off, and the lowpass fully open.
     private void ResetAudioFx()
     {
         if (_introSource != null) _introSource.pitch = 1f;
         if (_loopSource  != null) _loopSource.pitch  = 1f;
         if (_lowPass     != null) _lowPass.cutoffFrequency = 22000f;
+        _fxVolumeScale = 1f;
     }
 
     /// <summary>
