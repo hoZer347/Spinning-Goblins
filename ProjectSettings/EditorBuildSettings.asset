@@ -42,11 +42,17 @@ EditorBuildSettings:
     path: Assets/Scenes/Battle/Battle 5.unity
     guid: c2e03aa93e411164da67a1864199ed5f
   - enabled: 1
+    path: Assets/Scenes/Battle/Battle 6.unity
+    guid: 31942ca214583fd4eba02f0505202ae7
+  - enabled: 1
     path: Assets/Scenes/Menu/Intro Cutscene.unity
     guid: 4b74602e6c34c7a4b9078fff1d52027a
   - enabled: 1
     path: Assets/Scenes/Menu/Outro Cutscene.unity
     guid: 1eef6a9333bbd7c48be2206efca267e0
+  - enabled: 1
+    path: Assets/Scenes/Battle/Battle 7.unity
+    guid: 97014ce5309ea2c4fb81091ded9e84f2
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
