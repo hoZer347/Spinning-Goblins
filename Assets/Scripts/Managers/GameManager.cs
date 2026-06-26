@@ -97,10 +97,21 @@ public class GameManager : StateMachine<GameManager>
             Instance.BootstrapCurrentScene();
     }
 
-    // Called only when auto-bootstrapped. Detects what kind of scene we landed in and sets state.
-    private void BootstrapCurrentScene()
+    // Called only when auto-bootstrapped (a scene played directly in the editor): classify the scene
+    // that's already open, since sceneLoaded does not fire for the initial scene.
+    private void BootstrapCurrentScene() => ApplySceneState(SceneManager.GetActiveScene().path);
+
+    /// <summary>
+    /// Sets <see cref="CurrentSceneState"/> from a scene path. Run for every loaded scene so the state
+    /// always reflects where we actually are — no transition has to remember to set it (the intro
+    /// cutscene hands off to Tutorial 1 through LoadScene, which used to leave a gameplay level still
+    /// flagged Cutscene, so the CursorManager kept following the OS mouse instead of locking the goblin).
+    /// Endless mode owns its own state and is never reclassified; any non-menu, non-cutscene scene (a
+    /// tutorial level OR a Battle arena) counts as gameplay so the cursor and input stay live.
+    /// </summary>
+    private void ApplySceneState(string path)
     {
-        string path = SceneManager.GetActiveScene().path;
+        if (IsEndlessMode) { CurrentSceneState = SceneState.Endless; return; }
 
         if (MainMenuScene != null && path == MainMenuScene.ScenePath)
         {
@@ -128,7 +139,9 @@ public class GameManager : StateMachine<GameManager>
             }
         }
 
-        // Anything else (e.g. Battle 1) runs on its own placed enemies / spawner — nothing to set up.
+        // Any other scene (e.g. a Battle arena) is gameplay, not a menu or cutscene — flag it as such so
+        // a stale Cutscene/MainMenu state from before the transition can't keep the cursor lock disabled.
+        CurrentSceneState = SceneState.Tutorial;
     }
 
     private void Awake()
@@ -153,6 +166,11 @@ public class GameManager : StateMachine<GameManager>
         // Reaching any Battle scene means the tutorial is done — persist it for the build-only skip.
         if (IsBattleScene(scene.path))
             TutorialProgress.Completed = true;
+
+        // Keep the scene state in step with the scene we ACTUALLY landed in, however we got here, so a
+        // hand-off that doesn't set it itself (the intro cutscene -> Tutorial 1 via LoadScene) can't
+        // leave a gameplay level flagged Cutscene and stop the cursor locking onto the goblin.
+        ApplySceneState(scene.path);
     }
 
     /// <summary>

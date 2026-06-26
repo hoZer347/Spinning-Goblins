@@ -24,9 +24,16 @@ namespace hoZer.Dialogue
 		[SerializeField] TextAsset _script;
 
 		/// <summary>
-		/// The Font this DialogueManager will start with.
+		/// The Font this DialogueManager will start with (legacy Unity font — used only for setup validation
+		/// on the Persistent Dialogue prefab; the visual font comes from the TMP component or _startingTMPFont).
 		/// </summary>
 		[SerializeField] Font _startingFont;
+
+		/// <summary>
+		/// TMP font applied to the dialogue box each time the dialogue starts. Overrides whatever font is
+		/// already on the TextMeshProUGUI component. Leave empty to keep the component's current font.
+		/// </summary>
+		[SerializeField] TMP_FontAsset _startingTMPFont;
 
 		/// <summary>
 		/// The text streaming speed this DialogueManager will start with, in seconds per character.
@@ -232,12 +239,6 @@ namespace hoZer.Dialogue
 				return;
 			};
 
-			if (_continueText == null)
-			{
-				Debug.LogError("[Dialogue] - Continue Text is not assigned.");
-				DisableFromBadSetup();
-				return;
-			};
 
 			if (_script == null)
 			{
@@ -246,12 +247,8 @@ namespace hoZer.Dialogue
 				return;
 			};
 
-			if (_startingFont == null)
-			{
-				Debug.LogError("[Dialogue] - Starting Font not set.");
-				DisableFromBadSetup();
-				return;
-			}
+			if (_startingFont == null && _startingTMPFont == null)
+				Debug.LogWarning("[Dialogue] No Starting Font assigned — the dialogue box will use its current TMP font.");
 
 			#endregion
 
@@ -287,6 +284,9 @@ namespace hoZer.Dialogue
 					_bindings[attr.Name ?? method.Name] = method;
 				};
 
+			// Apply font now so the box shows the right face before the first Begin().
+			if (_startingTMPFont != null) _dialogueBox.font = _startingTMPFont;
+
 			// Wiring is good and the bindings are built — Begin() is now safe.
 			IsReady = true;
 		}
@@ -300,7 +300,7 @@ namespace hoZer.Dialogue
 		{
 			_textSpeed = _startingTextSpeed;
 			_dialogueBox.text = string.Empty;
-			_continueText.gameObject.SetActive(false);
+			if (_startingTMPFont != null) _dialogueBox.font = _startingTMPFont;
 			_voiceCharCount = 0;
 
 			Clear(); // drop any leftover queued states before re-parsing

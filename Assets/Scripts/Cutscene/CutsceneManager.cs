@@ -17,7 +17,7 @@ public class CutsceneManager : StateMachine<CutsceneManager>
     public SceneReference NextScene;
 
     [Header("Skip")]
-    public bool AllowSkip = true;
+    public bool AllowSkip = false;
 
     public int CurrentPanelIndex { get; set; } = 0;
 
@@ -39,8 +39,13 @@ public class CutsceneManager : StateMachine<CutsceneManager>
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse == null) return;
 
-        if (AllowSkip && mouse.leftButton.wasPressedThisFrame)
-            AdvancePanel();
+        if (!AllowSkip || !mouse.leftButton.wasPressedThisFrame) return;
+
+        // Don't skip the panel if a dialogue manager is running — the click belongs to St_Dg_WaitForInput.
+        var panel = Panels[CurrentPanelIndex];
+        if (panel.DialogueManager != null) return;
+
+        AdvancePanel();
     }
 
     public void AdvancePanel()
