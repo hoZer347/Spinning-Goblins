@@ -1,43 +1,40 @@
 using hoZer;
 
 /// <summary>
-/// Shows the current CutscenePanel, waits for its Duration, then advances.
+/// Shows the current CutscenePanel and waits for its dialogue to call [NextPanel].
+/// A DialogueManager on the panel is the only trigger to advance — there is no auto-timer.
 /// Moves to the next St_Cs_Panel if more panels remain, otherwise St_Cs_Complete.
 /// </summary>
 public class St_Cs_Panel : State<CutsceneManager>
 {
-    private float _elapsed;
     private CutscenePanel _panel;
 
     public override void OnEnter(State lastState)
     {
-        _elapsed = 0f;
         _panel = Focus.Panels[Focus.CurrentPanelIndex];
         _panel.Show();
-    }
-
-    public override void OnUpdate()
-    {
-        _elapsed += UnityEngine.Time.deltaTime;
-        if (_elapsed >= _panel.Duration)
-            Advance();
     }
 
     public void Skip() => Advance();
 
     private void Advance()
     {
-        _panel.Hide();
         Focus.CurrentPanelIndex++;
 
         if (Focus.CurrentPanelIndex < Focus.Panels.Length)
+        {
+            _panel.Hide();
             SetState<St_Cs_Panel>();
+        }
         else
-            SetState<St_Cs_Complete>();
+        {
+            SetState<St_Cs_Complete>(); // leave last panel visible — scene transition handles the wipe
+        }
     }
 
     public override void OnExit(State nextState)
     {
+        if (nextState is St_Cs_Complete) return; // don't hide — scene transition handles it
         _panel?.Hide();
     }
 }

@@ -10,8 +10,6 @@ namespace hoZer.Dialogue
 		public override void OnEnter(State lastState)
 		{
 			base.OnEnter(lastState);
-
-			Focus.ContinueText.gameObject.SetActive(true);
 		}
 
 		public override void OnUpdate()
@@ -30,8 +28,6 @@ namespace hoZer.Dialogue
 		public override void OnExit(State nextState)
 		{
 			base.OnExit(nextState);
-
-			Focus.ContinueText.gameObject.SetActive(false);
 		}
 	};
 };
