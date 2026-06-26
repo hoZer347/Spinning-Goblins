@@ -1,1 +1,1 @@
-[TextSpeed, Slow]Until...[Pause][Clear]He was stopped.[Pause][Clear]His powers were not enough...[Pause][Clear]To save his <color=yellow>family</color>.[Pause][Clear][NextPanel]
+[TextSpeed, Slow][StifleMusic]He was stopped.[Pause][Clear]His powers were not enough...[Pause][Clear]To save his <color=green>Family</color>.[Pause][Clear][NextPanel]

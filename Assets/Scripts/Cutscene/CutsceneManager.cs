@@ -41,9 +41,14 @@ public class CutsceneManager : StateMachine<CutsceneManager>
 
         if (!AllowSkip || !mouse.leftButton.wasPressedThisFrame) return;
 
+        // Only when a panel is actually on screen. Once the last panel advances, CurrentPanelIndex is bumped
+        // to Panels.Length and we hand off to St_Cs_Complete — but OnUpdate still runs for a frame, so
+        // indexing here without a bounds check threw IndexOutOfRange (an empty Panels array did too).
+        if (Panels == null || CurrentPanelIndex < 0 || CurrentPanelIndex >= Panels.Length) return;
+
         // Don't skip the panel if a dialogue manager is running — the click belongs to St_Dg_WaitForInput.
         var panel = Panels[CurrentPanelIndex];
-        if (panel.DialogueManager != null) return;
+        if (panel != null && panel.DialogueManager != null) return;
 
         AdvancePanel();
     }

@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f441384856f54c35b176c5485e853252, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  intro: {fileID: 8300000, guid: ef6ba9928f440b74da6f4aededeb949a, type: 3}
-  loop: {fileID: 8300000, guid: 312f16e9cde1dcd42a5be6587617d476, type: 3}
+  intro: {fileID: 0}
+  loop: {fileID: 0}
   volume: 0.45

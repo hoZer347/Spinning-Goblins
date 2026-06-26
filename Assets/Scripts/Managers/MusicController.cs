@@ -277,6 +277,35 @@ public class MusicController : MonoBehaviour
         ResetAudioFx();
     }
 
+    /// <summary>
+    /// Cleanly fades the music to silence over <paramref name="duration"/> seconds, then stops it — a plain
+    /// VOLUME fade with no pitch slowdown (unlike <see cref="SlowToStop"/>), for an ending hand-off like the
+    /// intro cutscene passing to the first level. A later <see cref="PlayTrack"/>/<see cref="Play"/> starts
+    /// fresh. Web-safe: it only rides _fxVolumeScale and finishes in StopMusic, so nothing is left to overlap.
+    /// </summary>
+    public void FadeOutAndStop(float duration = 2f)
+    {
+        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
+        _fadeRoutine = StartCoroutine(FadeOutRoutine(Mathf.Max(0.01f, duration)));
+    }
+
+    private IEnumerator FadeOutRoutine(float duration)
+    {
+        float startVol = _fxVolumeScale;
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Mathf.Min(Time.unscaledDeltaTime, MaxFxStep); // capped step — smooth across a scene-load spike
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / duration));
+            _fxVolumeScale = Mathf.Lerp(startVol, 0f, k);
+            yield return null;
+        }
+
+        _fxVolumeScale = 0f;
+        StopMusic();      // cancels the sequence + stops both sources, so nothing lingers into the next scene
+        ResetAudioFx();
+    }
+
     // The lowpass used by the slow-down, created on demand. Sits fully open (≈no effect) the rest of
     // the time, so leaving it on the object is harmless.
     private AudioLowPassFilter LowPass()

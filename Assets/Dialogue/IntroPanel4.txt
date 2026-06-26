@@ -1,1 +1,1 @@
-[TextSpeed, Slow]But they are enough...[Pause][Clear]To <color=red>AVENGE</color> them.[Pause][Clear][Done]
+[TextSpeed, Slow][UnStifleMusic]But they were enough...[Pause][Clear]To <color=red>AVENGE</color> them.[Pause][Clear][Done]

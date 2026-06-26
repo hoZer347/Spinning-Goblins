@@ -1,1 +1,1 @@
-[TextSpeed, Slow]Once unsealed...[Pause][Clear]He was <color=red>Unstoppable</color>.[Pause][Clear][NextPanel]
+[TextSpeed, Slow]Once unsealed...[Pause][Clear]He was <color=red>Unstoppable</color>.[Pause][Clear]Until...[Pause][Clear][NextPanel]
