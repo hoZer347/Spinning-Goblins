@@ -60,6 +60,10 @@ public class MusicController : MonoBehaviour
     // ease the volume even though Update() re-asserts the Inspector volume every frame.
     private float _fxVolumeScale = 1f;
 
+    // Per-track volume multiplier on top of the Inspector volume, set by PlayTrack so one song can be
+    // louder/quieter than the rest without changing the global level. Resets to 1 with each new track.
+    private float _trackVolume = 1f;
+
     // Cap the per-frame step of the slow-down / speed-up ramps. A scene load (death reload, battle entry)
     // blocks the main thread, so the next Time.unscaledDeltaTime is huge — without this cap the pitch
     // would lurch in one big step (the "choppy" jump). Capped, the ramp just continues smoothly after,
@@ -99,8 +103,8 @@ public class MusicController : MonoBehaviour
 
     private void Update()
     {
-        // Track the Inspector volume (tunable live), scaled by any active slow-down / speed-up fade.
-        float v = volume * _fxVolumeScale;
+        // Track the Inspector volume (tunable live), scaled by the per-track multiplier and any active fade.
+        float v = volume * _trackVolume * _fxVolumeScale;
         if (_introSource != null) _introSource.volume = v;
         if (_loopSource  != null) _loopSource.volume  = v;
     }
@@ -331,13 +335,15 @@ public class MusicController : MonoBehaviour
     /// <summary>
     /// Switches to a new track and starts it (optional one-shot <paramref name="newIntro"/>, then loops
     /// <paramref name="newLoop"/> forever) — e.g. the Beeg Dwarf cutscene bringing up its battle theme as
-    /// it ends. Stops whatever was playing first so they can't overlap.
+    /// it ends. Stops whatever was playing first so they can't overlap. <paramref name="trackVolume"/> is a
+    /// per-track multiplier on the global volume (1 = unchanged, >1 louder) that applies only to this song.
     /// </summary>
-    public void PlayTrack(AudioClip newLoop, AudioClip newIntro = null)
+    public void PlayTrack(AudioClip newLoop, AudioClip newIntro = null, float trackVolume = 1f)
     {
         StopMusic();
-        intro = newIntro;
-        loop  = newLoop;
+        intro        = newIntro;
+        loop         = newLoop;
+        _trackVolume = Mathf.Max(0f, trackVolume); // per-track level; leaves the global volume and other tracks alone
         Play();
     }
 

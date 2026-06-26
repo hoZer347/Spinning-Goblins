@@ -17,6 +17,9 @@ public class StartMusicOnFirstClick : MonoBehaviour
     [SerializeField] AudioClip introClip;
     [Tooltip("The main track, looped forever once the intro finishes (e.g. Boss Fight Loop).")]
     [SerializeField] AudioClip loopClip;
+    [Tooltip("Per-track volume multiplier on the global music volume — >1 makes this song louder without " +
+        "touching any other track.")]
+    [Range(0f, 2f)] [SerializeField] float volume = 1.3f;
 
     bool _started;
 
@@ -37,6 +40,7 @@ public class StartMusicOnFirstClick : MonoBehaviour
 
         _started = true;
         if (loopClip != null && MusicController.Instance != null)
-            MusicController.Instance.PlayTrack(loopClip, introClip);
+            MusicController.Instance.PlayTrack(loopClip, introClip, volume);
     }
 }
+
